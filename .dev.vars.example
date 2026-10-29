@@ -1,0 +1,2 @@
+# Copy to .dev.vars, then replace this value (minimum 24 characters).
+SETUP_TOKEN=replace-with-a-random-secret-at-least-24-characters
