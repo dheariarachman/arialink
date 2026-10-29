@@ -116,7 +116,7 @@ Use a **4 px base spacing unit**. The most commonly visible intervals appear to 
 
 ### 3.3 Current application spacing rules
 
-Apply these rules across Beranda, Transaksi, Saldo, Laporan, Pengguna, and their detail dialogs. Keep colors, typography, borders, radii, and data behavior unchanged when adjusting spacing.
+Apply these rules across Beranda, Transaksi, Saldo, Utang & Piutang, Laporan, Pengguna, and their detail dialogs. Keep colors, typography, borders, radii, and data behavior unchanged when adjusting spacing.
 
 | Relationship | Size | CSS token | Tailwind equivalent |
 | --- | ---: | --- | --- |

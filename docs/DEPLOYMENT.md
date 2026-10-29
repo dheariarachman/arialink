@@ -95,6 +95,8 @@ Pada Chrome/Edge gunakan menu install atau tombol Pasang aplikasi ketika tersedi
 - Tarik tunai Rp505.000 diterima/Rp500.000 cash/admin termasuk → laba Rp5.000.
 - Tarik tunai Rp500.000 transfer/Rp500.000 cash/admin terpisah Rp5.000 → laba Rp5.000 dan penerimaan Rp505.000.
 - Pastikan perubahan transaksi tidak mengubah saldo kas atau rekening.
+- Uji Piutang dan Utang, pembayaran sebagian/penuh, penolakan pembayaran berlebih, edit, serta hapus. Grand total = dana tersedia + sisa piutang − sisa utang; kas/rekening tetap dicatat manual.
+- Terapkan `0002_debts.sql` sebelum menggunakan build dengan fitur utang / piutang. Lihat [aturan dan rollback](DEBTS.md).
 - Periksa laporan pada pergantian hari WIB serta batas Minggu/Senin.
 - Login online dan tunggu sinkron, muat ulang online, aktifkan mode pesawat, catat transaksi, muat ulang offline, lalu kembali online.
 - Uji dua perangkat mengedit catatan yang sama untuk memastikan perbandingan konflik muncul.

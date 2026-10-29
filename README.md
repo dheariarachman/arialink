@@ -11,6 +11,8 @@ Satu aplikasi **Next.js responsive PWA** untuk pencatatan usaha. Target deployme
 - Nilai kosong berbeda dari nol. Laba yang belum dapat dihitung tampil “—”. Laporan menjumlahkan nilai yang tersedia dan memberi tahu jumlah transaksi dengan laba belum lengkap. Admin tunai terpisah yang diisi termasuk penerimaan pelanggan dan tidak dihitung dua kali.
 - Saldo rekening/e-wallet dicatat manual; kas dicatat per denominasi. **Transaksi tidak mengubah saldo apa pun.** Saldo dan jumlah pecahan tidak boleh negatif.
 - Dashboard total saldo, penerimaan, laba, transaksi terbaru.
+- Utang & piutang: nama pihak, nominal awal, tanggal, jatuh tempo opsional, catatan, pembayaran sebagian/penuh, dan riwayat pembayaran. Status lunas dihitung otomatis.
+- Dana tersedia = rekening + e-wallet + kas. **Grand total setelah utang / piutang = dana tersedia + sisa piutang − sisa utang**; dapat negatif. Pencatatan/pembayaran utang tidak mengubah saldo manual atau laba transaksi. Lihat [aturan utang & piutang](docs/DEBTS.md).
 - Laporan harian/mingguan/bulanan; minggu Senin–Minggu, WIB, rincian di aplikasi.
 - Data digunakan bersama oleh semua pengguna. Semua boleh mengubah/menghapus transaksi dan mengubah saldo. Hanya admin dapat menambah akun, menonaktifkan akun lain, dan mengatur ulang kata sandi akun lain.
 - Antrean offline tersimpan di IndexedDB, pengiriman ulang idempotent, deteksi konflik dengan pilihan data server/perangkat. Pencatatan offline hanya setelah login online pada perangkat tersebut.
@@ -61,7 +63,7 @@ Untuk pengujian IndexedDB/outbox dengan browser sungguhan, tersedia fixture loka
 npm run test:browser
 ```
 
-Buka [http://127.0.0.1:4178](http://127.0.0.1:4178). Fixture menggunakan SQLite memory, akun dan data pengujian sendiri, serta tidak mengakses D1 produksi. Layar menampilkan hasil 8 pengujian. Ini menguji IndexedDB, respons jaringan hilang, konflik, dan isolasi akun; bukan pengganti pengujian build Next.js/PWA. Hentikan server dengan Ctrl+C.
+Buka [http://127.0.0.1:4178](http://127.0.0.1:4178). Fixture menggunakan SQLite memory, akun dan data pengujian sendiri, serta tidak mengakses D1 produksi. Layar menampilkan hasil 12 pengujian, termasuk pembayaran utang / piutang, respons hilang, dan konflik pembayaran. Ini menguji IndexedDB, respons jaringan hilang, konflik, dan isolasi akun; bukan pengganti pengujian build Next.js/PWA. Hentikan server dengan Ctrl+C.
 
 Lihat [status verifikasi](docs/VERIFICATION.md) untuk pemeriksaan yang benar-benar telah dijalankan pada paket ini.
 

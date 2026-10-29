@@ -1,20 +1,38 @@
-# Status verifikasi — 27 Oktober 2026
+# Status verifikasi — 29 Oktober 2026
 
-## Telah dijalankan
+## Pemeriksaan otomatis
 
-- `node --test tests/*.test.mjs`: **13 pengujian lulus**.
-- `node scripts/check.mjs`: syntax JavaScript, konfigurasi JSON lulus.
-- Parser TypeScript yang tersedia lokal: komponen JSX, layout, halaman, manifest, dan konfigurasi OpenNext/Next tidak memiliki kesalahan sintaks.
-- Migrasi database dan API dijalankan dalam SQLite memory nyata menggunakan adapter kecil yang meniru antarmuka query D1. Batch menggunakan transaksi SQLite.
-- Pengujian rumus/field opsional/WIB, periode laporan, saldo tetap, role, sesi, setup awal, throttling, validasi, retry idempotent, konflik versi, serta tombstone lulus.
-- Unit test service worker dengan simulasi Cache API: shell/aset awal dipra-cache, fallback HTML saat offline, API tidak di-cache, cache aplikasi lain tidak dihapus.
+- `npm test`: seluruh 5 file uji lulus (20 kasus yang didefinisikan), termasuk domain, API, migrasi, dan service worker.
+- `npm run check`: syntax JavaScript dan package JSON lulus.
+- `npm run build`: kompilasi JSX, build produksi Next.js, dan pembuatan halaman statis lulus.
+- `npm run cf:build`: build produksi Next.js dan bundling Worker OpenNext lulus.
+- Uji migrasi membandingkan seluruh kolom record dan receipt sebelum/sesudah `0002_debts.sql`; versi, tombstone, timestamp, penulis, payload, dan penanda retry tetap identik. Penulisan jenis lama/baru, retry, serta pemeriksaan foreign key lulus.
+- Uji utang / piutang mencakup kedua jenis, tanggal WIB, pembayaran sebagian/penuh, nominal tidak valid, pembayaran berlebih, ID pembayaran berulang, edit yang melanggar riwayat, penghapusan, total negatif, saldo manual tetap, dan laporan laba yang tidak memasukkan pembayaran utang.
+- Uji API mencakup pengguna bersama, validasi server, retry idempotent, konflik pembayaran bersamaan, dan penolakan edit/hapus dengan versi lama.
 
-## Belum dapat diverifikasi di lingkungan pengerjaan
+## Browser dan runtime Cloudflare lokal
 
-- `npm install`: registry npm tidak dapat dijangkau dari shell (`ENOTFOUND`). Permintaan izin untuk unduhan ditolak otomatis oleh kebijakan lingkungan.
-- Karena paket belum terpasang, **build Next.js/OpenNext, rendering React, dan preview runtime Cloudflare belum dijalankan**. Tidak ada lockfile hasil install yang direkayasa.
-- Fixture uji IndexedDB browser sudah disediakan (`npm run test:browser`), tetapi browser lokal tidak dapat menjangkau server test akibat pembatasan socket lingkungan. Delapan pengujian browser dalam fixture **belum diklaim lulus**.
-- Install PWA, reload offline pada browser/perangkat nyata, verifikasi visual desktop/mobile, dan database D1 remote belum diverifikasi.
-- Tidak ada akun/cloud resource yang dibuat atau deployment produksi yang dilakukan.
+Dijalankan dengan Chromium headless melalui Chrome DevTools Protocol, Worker hasil OpenNext, dan D1 lokal terisolasi pada folder sementara. Kredensial/data fixture dibuat khusus pengujian; database remote dan data usaha tidak diakses.
 
-Sebelum dipakai untuk data usaha sungguhan, jalankan langkah pemeriksaan lokal dan acceptance test pada `DEPLOYMENT.md`. Source tersedia lengkap; status ini tidak menyatakan build produksi atau offline end-to-end sudah lulus.
+- Migrasi diterapkan melalui Wrangler ke D1 lokal terisolasi.
+- UI: pembuatan Piutang/Utang, pembayaran sebagian/penuh, penolakan pembayaran berlebih, edit nominal, status Lunas, hapus, dan grand total sesuai rumus lulus.
+- Layout pada lebar 360, 390, 768, dan 1440 CSS px tidak meluapkan halaman. Tabel tetap dapat digeser horizontal. Dialog formulir pada 390 px tetap di dalam viewport.
+- Layout setara pembesaran 200% diuji dengan viewport 720 CSS px dan device scale factor 2. Ini bukan pengujian pengaturan zoom asli browser atau semua pengaturan pembesaran teks.
+- Tab mempertahankan fokus di dalam dialog utang / piutang; Escape menutup dialog.
+- PWA produksi: login online, service worker aktif, reload online, pemutusan jaringan browser, pencatatan piutang dan pembayaran offline, reload offline, lalu penyambungan ulang lulus. Server menyimpan tepat satu record dengan satu pembayaran dan versi yang sesuai; saldo rekening manual tetap sama.
+- Konflik pembayaran bersamaan ditampilkan dengan kedua riwayat. Memilih data server lalu memasukkan ulang pembayaran lokal mempertahankan kedua pembayaran.
+- Fixture `npm run test:browser`: **12 pengujian browser lulus**, termasuk IndexedDB, respons hilang setelah commit, retry, isolasi akun, konflik, pelunasan, dan tombstone utang / piutang.
+
+Hasil ringkas tersimpan pada [debt-browser-results.json](screenshots/debt-browser-results.json). Untuk preview OpenNext lokal, gunakan hostname `localhost`; permintaan mutasi dari alamat IP `127.0.0.1` ditolak pemeriksaan origin pada konfigurasi preview yang diuji.
+
+## Screenshot data fixture
+
+- [Dashboard dan grand total](screenshots/debts-dashboard.png)
+- [Utang & piutang desktop](screenshots/debts-desktop.png)
+- [Utang & piutang mobile](screenshots/debts-mobile.png)
+- [Formulir mobile](screenshots/debts-mobile-form.png)
+- [Perbandingan konflik pembayaran](screenshots/debts-conflict.png)
+
+## Batas pemeriksaan
+
+Instalasi PWA pada perangkat Android/iOS nyata, Safari, pengujian screen reader, dan akses database D1 remote belum diuji. Tidak ada migrasi remote, resource cloud, atau deployment produksi yang dilakukan. Terapkan migrasi baru sebelum deployment sesuai [DEPLOYMENT.md](DEPLOYMENT.md) dan [aturan utang / piutang](DEBTS.md).

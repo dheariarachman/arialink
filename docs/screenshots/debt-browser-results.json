@@ -1,0 +1,21 @@
+{
+  "date": "2026-10-29T04:51:02.058Z",
+  "fixture": "SELESAI: 12 pengujian browser lulus.",
+  "preview": "isolated local Cloudflare Worker + D1",
+  "checks": [
+    "debt creation",
+    "partial repayments",
+    "overpayment rejection",
+    "grand total",
+    "manual balance unchanged",
+    "debt edits",
+    "settlement",
+    "deletion",
+    "responsive 360/390/768/1440px",
+    "200% equivalent viewport",
+    "dialog keyboard focus and Escape",
+    "PWA offline reload",
+    "reconnect exactly once",
+    "concurrent repayment conflict review"
+  ]
+}
