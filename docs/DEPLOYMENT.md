@@ -21,10 +21,10 @@ Siapkan nama/email admin pertama, kata sandi minimal 10 karakter, dan `SETUP_TOK
 ## 2. Buat database
 
 ```sh
-npx wrangler d1 create arialink-db
+npx wrangler d1 create arialink
 ```
 
-Salin UUID database yang dikembalikan ke `d1_databases[0].database_id` dalam `wrangler.jsonc`, mengganti `00000000-0000-0000-0000-000000000000`. Pertahankan `binding: "DB"`, `database_name: "arialink-db"`, dan folder migrasi. Bila nama database diganti, sesuaikan script migrasi dalam `package.json`.
+Salin UUID database yang dikembalikan ke `d1_databases[0].database_id` dalam `wrangler.jsonc`, mengganti `00000000-0000-0000-0000-000000000000`. Pertahankan `binding: "DB"`, `database_name: "arialink"`, dan folder migrasi. Bila nama database diganti, sesuaikan script migrasi dalam `package.json`.
 
 Terapkan migrasi ke database remote:
 
@@ -106,7 +106,7 @@ Pada Chrome/Edge gunakan menu install atau tombol Pasang aplikasi ketika tersedi
 Backup database tersinkron (tidak mencakup antrean perangkat yang belum terkirim):
 
 ```sh
-npx wrangler d1 export arialink-db --remote --output=arialink-backup.sql
+npx wrangler d1 export arialink --remote --output=arialink-backup.sql
 ```
 
 Simpan hasil backup di tempat pribadi karena berisi data usaha dan hash autentikasi. Jangan commit atau kirimkan sebagai lampiran publik.

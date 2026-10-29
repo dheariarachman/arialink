@@ -4,6 +4,8 @@
 >
 > **Status:** Reference specification / implementation baseline, **not** an exported Figma design system. All screenshot-based dimensions and font identifications are **visual estimates** and should be calibrated against the original source file, if available.
 
+> **Spacing baseline:** Section 3.3 records the approved compact spacing used in ARIALink. These implementation rules take precedence over screenshot estimates for spacing.
+
 ## 1. Design Principles
 
 - **Minimalist SaaS aesthetic:** Prioritize clarity, alignment, and functional hierarchy over decoration.
@@ -86,8 +88,8 @@ Use a **4 px base spacing unit**. The most commonly visible intervals appear to 
 | --- | ---: | --- |
 | `space-1` | 4 px | Tight label/description gap |
 | `space-2` | 8 px | Icon-text gap, compact element gap |
-| `space-3` | 12 px | Navigation/item padding, compact card sections |
-| `space-4` | 16 px | Card padding, vertical section gap |
+| `space-3` | 12 px | List row padding, content gaps, card section spacing |
+| `space-4` | 16 px | Card padding, mobile page padding |
 | `space-5` | 20 px | Main content padding, card-to-card gap |
 | `space-6` | 24 px | Sidebar grouping, section separation |
 | `space-8` | 32 px | Major section separation |
@@ -111,6 +113,29 @@ Use a **4 px base spacing unit**. The most commonly visible intervals appear to 
 | Table cell horizontal padding | 8–12 px |
 
 **Implementation convention:** Prefer exact tokens (for example, 20 px) when a screenshot estimate falls within a narrow interval. Avoid adding arbitrary 1–3 px adjustments until visual QA.
+
+### 3.3 Current application spacing rules
+
+Apply these rules across Beranda, Transaksi, Saldo, Laporan, Pengguna, and their detail dialogs. Keep colors, typography, borders, radii, and data behavior unchanged when adjusting spacing.
+
+| Relationship | Size | CSS token | Tailwind equivalent |
+| --- | ---: | --- | --- |
+| Card-to-card gap, both axes | 20 px | `--card-gap` | `gap-5` |
+| Card inner padding | 16 px | `--card-padding` | `p-4` |
+| List/detail row vertical padding | 12 px | `--row-padding` | `py-3` |
+| Gap between row contents | 12 px | `--row-gap` | `gap-3` |
+| Card header/content spacing | 12 px | `--section-gap` | `gap-3`, `mb-3` |
+| Gap between adjacent action buttons | 8 px | `--action-gap` | `gap-2` |
+| Label/metadata gap | 4 px | `--space-1` | `gap-1`, `mt-1` |
+| Main content horizontal padding | 20 px desktop/tablet; 16 px mobile | `--content-padding`, `--space-4` | `px-5`, `px-4` |
+
+- Keep related row content together. Name/email blocks must not grow merely to push roles or actions to the far edge. Balance summaries, detail rows, and report filters use natural content widths and 12 px gaps.
+- Let text wrap with `min-width: 0` and `overflow-wrap: anywhere` where needed. Allow actions to wrap rather than adding large gaps or clipping labels.
+- Remove first-row top padding and last-row bottom padding when the enclosing card already supplies the outer padding. When a header or footer intervenes, retain the applicable 12 px section gap.
+- Financial tables retain aligned columns and their existing cell padding and row heights; do not convert them to compact flex rows.
+- Use one shared grid for related card rows, with spanning panels on the same tracks. Use three summary/balance columns on desktop, two on tablet, and one on mobile. Cash denomination cards retain five desktop columns, two on tablet, and one on mobile.
+- Preserve 44 px mobile touch targets and visible keyboard focus. Compact spacing must not shrink interactive targets.
+- Keep the 20 px card gap at every breakpoint. Use 24 px vertical padding and 16 px horizontal padding for empty states.
 
 ## 4. Dashboard Layout
 
@@ -161,7 +186,7 @@ The screenshot is cropped at the right edge. Do **not** infer exact total page w
 - Use a two-column **application shell**: `208px minmax(0, 1fr)` on desktop.
 - Within main content, use a flexible grid with **20 px** gap.
 - KPI card layout: `repeat(3, minmax(0, 1fr))` only when the available container width permits readable content.
-- Lower panels: start with a **2:1** or **approximately 3:1** width balance and calibrate to the complete source design; the crop makes a precise ratio uncertain.
+- Lower dashboard panels share the three summary-card tracks: the transaction panel spans two tracks and the balance panel spans one. On tablet/mobile, these panels span the full grid width.
 - Apply `min-width: 0` to grid children so long content does not unexpectedly expand columns.
 
 ## 5. Component Specifications
@@ -304,6 +329,7 @@ The screenshot only provides a desktop view. The rules below are proposed implem
 - On mobile, show a clear navigation trigger instead of shrinking the full sidebar to fit.
 - Allow the header greeting and search/action area to wrap or reorganize.
 - Keep card metrics legible; do not force a 28 px KPI value into a narrow layout if it will clip.
+- Apply the exact current column counts and spacing in section 3.3 when implementing ARIALink; the table above describes the original reference recommendations.
 - Allow transaction tables to scroll horizontally or provide an intentionally designed card-based alternative.
 - Treat **44 × 44 px** as a useful minimum touch target for interactive mobile controls, even if the visual component is smaller.
 - Respect user font-size and zoom settings; prevent fixed heights from clipping enlarged text.
@@ -355,6 +381,10 @@ The following tokens intentionally omit all colors.
   --content-padding: 20px;
   --card-gap: 20px;
   --card-padding: 16px;
+  --row-padding: var(--space-3);
+  --row-gap: var(--space-3);
+  --action-gap: var(--space-2);
+  --section-gap: var(--space-3);
 
   /* Radius and geometry */
   --radius-sm: 4px;
@@ -417,6 +447,14 @@ The following tokens intentionally omit all colors.
 ```
 
 ## 9. Tailwind CSS / shadcn/ui Implementation Notes
+
+ARIALink uses JSX and global CSS. Tailwind and the shadcn/ui component foundation are installed; migration of existing screens is incremental.
+
+- Add only the shadcn/ui components needed by existing screens. Keep their source in the repository and adapt them to this design system rather than treating their defaults as a new design baseline.
+- Map shared spacing, typography, geometry, and responsive behavior to the existing tokens in `app/globals.css`. Keep theme colors in the application theme; this document does not prescribe them.
+- Preserve the existing Indonesian labels, accessible names, keyboard behavior, focus visibility, mobile touch targets, and data-entry behavior. In particular, retain rupiah formatting, empty-versus-zero distinctions, and manually maintained balances.
+- Migrate the application shell and existing screens incrementally. Preserve authentication, API, synchronization, and offline behavior; the component migration should not introduce new product features.
+- Verify layouts at desktop, tablet, and mobile widths and at 200% zoom. Test dialogs, navigation, forms, tables, loading and error states with keyboard and touch as appropriate.
 
 - Install and set **Inter** as the application sans-serif font, or swap to another visually validated candidate.
 - Tailwind's default spacing scale already maps naturally to the 4 px base: `1=4px`, `2=8px`, `3=12px`, `4=16px`, `5=20px`, `6=24px`, `8=32px`, `10=40px`.
@@ -485,6 +523,8 @@ Visual fidelity should not come at the expense of usability:
 - [ ] Sidebar items align icons and labels on a consistent 36 px visual rhythm.
 - [ ] KPI cards align their titles, filters, and values.
 - [ ] Card gaps and content padding are consistent.
+- [ ] Rows use 12 px padding/gaps, actions use 8 px gaps, and metadata uses 4 px gaps.
+- [ ] First/last rows avoid doubled outer padding; related content has no expanding spacer.
 - [ ] Tables retain readable column labels and values at narrow widths.
 - [ ] The interface is usable with keyboard, zoom, and screen readers.
 - [ ] Responsive layouts are tested at desktop, tablet, and mobile widths.
