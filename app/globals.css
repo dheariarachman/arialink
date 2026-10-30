@@ -636,13 +636,13 @@ tr:last-child td {
 }
 
 .balance-summary {
-  display: flex;
-  justify-content: flex-start;
+  display: grid;
+  grid-template-columns: minmax(0, 160px) minmax(0, 1fr);
+  align-items: baseline;
   gap: var(--row-gap);
   padding: var(--row-padding) 0;
   border-bottom: 1px solid var(--line);
   font-size: var(--text-sm);
-  flex-wrap: wrap;
 }
 
 .section-title + .balance-summary { padding-top: 0; }
@@ -656,6 +656,30 @@ tr:last-child td {
 
 .balance-summary b {
   font-variant-numeric: tabular-nums;
+  font-weight: var(--font-semibold);
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.debt-list-filters {
+  display: flex;
+  align-items: center;
+  gap: var(--action-gap);
+  flex-wrap: wrap;
+}
+
+.debt-hide-settled {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  white-space: nowrap;
+  font-size: var(--text-sm);
+}
+
+.debt-hide-settled input { accent-color: var(--ink); }
+
+@media (max-width: 480px) {
+  .balance-summary { grid-template-columns: minmax(0, 112px) minmax(0, 1fr); }
 }
 
 .panel>.subtle:last-child {
