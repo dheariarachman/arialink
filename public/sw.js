@@ -1,4 +1,4 @@
-const CACHE='arialink-shell-v3';
+const CACHE='arialink-shell-v5';
 const SHELL=['/manifest.webmanifest','/icon.svg','/icon-192.png','/icon-512.png'];
 self.addEventListener('install',event=>{
  event.waitUntil((async()=>{

@@ -1,0 +1,25 @@
+{
+  "date": "2026-10-30T03:09:29.287Z",
+  "fixture": "SELESAI: 13 pengujian browser lulus.",
+  "preview": "isolated local Cloudflare Worker + D1",
+  "checks": [
+    "type filters and counts",
+    "type-specific empty states",
+    "global summary unchanged by filtering",
+    "paid records retained",
+    "direct settlement for both types",
+    "remaining-only payment and history preserved",
+    "cancellation",
+    "WIB default and date constraints",
+    "stale snapshot rejection",
+    "duplicate submit guard",
+    "focus restoration",
+    "responsive 360/390/768/1440px and 200% equivalent viewport",
+    "mobile touch targets and row action",
+    "confirmation keyboard and Escape",
+    "PWA offline settlement and reload",
+    "reconnect exactly once",
+    "concurrent server payment conflict",
+    "manual bank balance unchanged"
+  ]
+}

@@ -11,7 +11,8 @@ Satu aplikasi **Next.js responsive PWA** untuk pencatatan usaha. Target deployme
 - Nilai kosong berbeda dari nol. Laba yang belum dapat dihitung tampil “—”. Laporan menjumlahkan nilai yang tersedia dan memberi tahu jumlah transaksi dengan laba belum lengkap. Admin tunai terpisah yang diisi termasuk penerimaan pelanggan dan tidak dihitung dua kali.
 - Saldo rekening/e-wallet dicatat manual; kas dicatat per denominasi. **Transaksi tidak mengubah saldo apa pun.** Saldo dan jumlah pecahan tidak boleh negatif.
 - Dashboard total saldo, penerimaan, laba, transaksi terbaru.
-- Utang & piutang: nama pihak, nominal awal, tanggal, jatuh tempo opsional, catatan, pembayaran sebagian/penuh, dan riwayat pembayaran. Status lunas dihitung otomatis.
+- Utang & piutang: nama pihak, nominal awal, tanggal, jatuh tempo opsional, catatan, pelunasan penuh satu kali tanpa cicilan, dan riwayat pembayaran lama yang dipertahankan. Status lunas dihitung otomatis.
+- Transaksi belum dibayar: nama pelanggan, tagihan penuh, dan jatuh tempo opsional; otomatis muncul sebagai Piutang. Laba mengikuti tanggal transaksi, penerimaan mengikuti tanggal pelunasan penuh.
 - Dana tersedia = rekening + e-wallet + kas. **Grand total setelah utang / piutang = dana tersedia + sisa piutang − sisa utang**; dapat negatif. Pencatatan/pembayaran utang tidak mengubah saldo manual atau laba transaksi. Lihat [aturan utang & piutang](docs/DEBTS.md).
 - Laporan harian/mingguan/bulanan; minggu Senin–Minggu, WIB, rincian di aplikasi.
 - Data digunakan bersama oleh semua pengguna. Semua boleh mengubah/menghapus transaksi dan mengubah saldo. Hanya admin dapat menambah akun, menonaktifkan akun lain, dan mengatur ulang kata sandi akun lain.

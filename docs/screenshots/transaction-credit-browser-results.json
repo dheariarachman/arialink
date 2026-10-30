@@ -1,0 +1,52 @@
+{
+  "checks": [
+    "Create unpaid transaction with customer and full charge; one server record and one piutang",
+    "Linked debt opens transaction editor and updates the same invoice",
+    "Full settlement from transaction detail saves once after double submit",
+    "Reports attribute margin to transaction date and collections to settlement date",
+    "Standalone debts only expose full settlement and preserve manual balances",
+    "Responsive layouts, mobile form and full settlement confirmation",
+    "Production PWA creates and fully settles offline across reloads, then retries without duplicates",
+    "Concurrent full settlements require review and cannot overwrite the saved settlement",
+    "IndexedDB integration fixture passes all full-settlement and retry cases"
+  ],
+  "layouts": [
+    {
+      "viewport": 360,
+      "width": 345
+    },
+    {
+      "viewport": 390,
+      "width": 375
+    },
+    {
+      "viewport": 768,
+      "width": 753
+    },
+    {
+      "viewport": 1440,
+      "width": 1440
+    }
+  ],
+  "fixture": {
+    "status": "passed",
+    "text": "SELESAI: 15 pengujian browser lulus.",
+    "tests": [
+      "LULUS — Catatan offline tersimpan di IndexedDB dengan field kosong",
+      "LULUS — Ubah catatan sebelum online mempertahankan urutan versi",
+      "LULUS — Respons hilang setelah server menyimpan tidak menggandakan transaksi",
+      "LULUS — Perubahan pengguna lain memunculkan konflik tanpa menimpa data",
+      "LULUS — Pilihan gunakan perubahan saya disimpan dengan versi server terbaru",
+      "LULUS — Form yang terbuka pada versi lama tidak menimpa edit lokal terbaru",
+      "LULUS — Antrean akun lain terisolasi dan tidak terkirim lewat sesi admin",
+      "LULUS — Tambah lalu hapus catatan offline membatalkan antrean yang belum dikirim",
+      "LULUS — Utang / piutang offline menolak cicilan dan menyimpan seluruh tagihan",
+      "LULUS — Respons pelunasan hilang dikirim ulang tanpa pembayaran ganda",
+      "LULUS — Pelunasan bersamaan ditinjau lewat konflik dan data server dipertahankan",
+      "LULUS — Pelunasan menolak versi lama dan pengiriman ganda",
+      "LULUS — Transaksi belum dibayar dan piutang offline memakai satu catatan",
+      "LULUS — Pelunasan transaksi offline bertahan setelah reload data dan retry respons hilang",
+      "LULUS — Penghapusan utang lunas dan pembatalan transaksi offline tidak mengubah kas"
+    ]
+  }
+}

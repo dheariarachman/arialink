@@ -1309,6 +1309,7 @@ dialog.navigation-drawer { box-shadow: none; }
 }
 
 .debt-form,.debt-detail { margin-top: var(--space-4); }
+.debt-row-actions { display: flex; flex-wrap: wrap; align-items: center; gap: var(--action-gap); }
 .debt-form textarea {
   display: block;
   width: 100%;
@@ -1333,3 +1334,5 @@ dialog.navigation-drawer { box-shadow: none; }
 .debt-payments li:last-child { padding-bottom: 0; border-bottom: 0; }
 .debt-payments span { min-width: 0; overflow-wrap: anywhere; white-space: pre-wrap; }
 .debt-payments b { font-variant-numeric: tabular-nums; }
+
+.transaction-fields { border: 0; padding: 0; margin: 0; min-width: 0; }
