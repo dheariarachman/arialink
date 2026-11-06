@@ -97,6 +97,8 @@ Pada Chrome/Edge gunakan menu install atau tombol Pasang aplikasi ketika tersedi
 - Pastikan perubahan transaksi tidak mengubah saldo kas atau rekening.
 - Uji Piutang dan Utang, pembayaran sebagian/penuh, penolakan pembayaran berlebih, edit, serta hapus. Grand total = dana tersedia + sisa piutang − sisa utang; kas/rekening tetap dicatat manual.
 - Terapkan `0002_debts.sql` sebelum menggunakan build dengan fitur utang / piutang. Lihat [aturan dan rollback](DEBTS.md).
+- Terapkan `0003_daily_closings.sql` sebelum memakai Saldo Harian. Lihat [pemakaian, integritas, offline, dan rollback](DAILY_BALANCES.md). Uji Tutup Hari, penjelasan perubahan, dan penolakan tinjauan usang.
+- Terapkan `0004_financial_snapshots.sql` sebelum build snapshot lengkap. Periksa nilai terakhir Saldo/Utang/Piutang, penolakan tinjauan lama, dan label Tidak direkam pada penutupan lama.
 - Periksa laporan pada pergantian hari WIB serta batas Minggu/Senin.
 - Login online dan tunggu sinkron, muat ulang online, aktifkan mode pesawat, catat transaksi, muat ulang offline, lalu kembali online.
 - Uji dua perangkat mengedit catatan yang sama untuk memastikan perbandingan konflik muncul.
@@ -124,3 +126,7 @@ Snapshot data bersama dimuat seluruhnya untuk cache offline; belum ada paginatio
 ## Rujukan
 
 [Cloudflare Next.js](https://developers.cloudflare.com/workers/framework-guides/web-apps/nextjs/), [OpenNext](https://opennext.js.org/cloudflare/get-started), [OpenNext bindings](https://opennext.js.org/cloudflare/bindings).
+
+### Kredit Barang
+
+Versi Kredit Barang membutuhkan migrasi `0005_goods_credit.sql` sebelum aplikasi baru digunakan. Migrasi menambah tabel kontrak dan receipt operasi kredit, tanpa memindahkan transaksi utama. Ikuti prosedur migrasi remote dan deployment di atas; pengujian fitur ini hanya menerapkan migrasi ke database lokal terisolasi. Aturan penggunaan dan batasan ada di [GOODS_CREDIT.md](GOODS_CREDIT.md).

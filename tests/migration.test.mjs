@@ -19,9 +19,26 @@ test('debt migration preserves old records, tombstones and retry receipts; old/n
  assert.deepEqual((await db.prepare('SELECT * FROM records ORDER BY id').all()).results,before);
  assert.deepEqual((await db.prepare('SELECT * FROM mutation_receipts ORDER BY id').all()).results,receipts);
  assert.equal((await mutate(db,user,balance)).version,1);
- const changed=await mutate(db,user,{...balance,id:crypto.randomUUID(),baseVersion:1,payload:{...balance.payload,amount:6000000}});
+ const changed=await mutate(db,user,{...balance,id:crypto.randomUUID(),baseVersion:1,payload:{...balance.payload,amount:6000000,adjustmentReason:'Koreksi saldo'}});
  assert.equal(changed.version,2);
  const debt=await mutate(db,user,make('debt',{type:'Utang',name:'Supplier',amount:500000}));
  assert.equal(debt.kind,'debt');assert.equal(debt.version,1);
+ assert.equal((await db.prepare('PRAGMA foreign_key_check').all()).results.length,0);db.close();
+});
+
+test('closing migration preserves existing balances and receipts without fabricating past closings',async()=>{
+ const db=testDatabase({through:'0002_debts.sql'}),user={id:'closing-migration-user'};
+ await db.prepare("INSERT INTO users(id,name,email,password_hash,role,created_at) VALUES (?,'Owner','closing-migration@test','hash','admin','2026-10-01')").bind(user.id).run();
+ const m={id:crypto.randomUUID(),recordId:crypto.randomUUID(),kind:'balance',baseVersion:0,deleted:false,payload:{name:'BCA',category:'Rekening',amount:12000}};
+ await mutate(db,user,m);
+ const before=(await db.prepare('SELECT * FROM records ORDER BY id').all()).results,receipts=(await db.prepare('SELECT * FROM mutation_receipts ORDER BY id').all()).results;
+ db.execMigration(readFileSync(new URL('../migrations/0003_daily_closings.sql',import.meta.url),'utf8'));
+ assert.deepEqual((await db.prepare('SELECT * FROM records ORDER BY id').all()).results,before);
+ assert.deepEqual((await db.prepare('SELECT * FROM mutation_receipts ORDER BY id').all()).results,receipts);
+ assert.equal((await db.prepare('SELECT * FROM daily_closings').all()).results.length,0);
+ assert.equal((await db.prepare('SELECT * FROM balance_history').all()).results.length,0);
+ await mutate(db,user,m);assert.equal((await db.prepare('SELECT revision FROM balance_state').first()).revision,0);
+ await mutate(db,user,{...m,id:crypto.randomUUID(),baseVersion:1,payload:{...m.payload,amount:11000,adjustmentReason:'Biaya'}});
+ const h=await db.prepare('SELECT * FROM balance_history').first();assert.equal(JSON.parse(h.before_payload).amount,12000);assert.equal(h.revision,1);
  assert.equal((await db.prepare('PRAGMA foreign_key_check').all()).results.length,0);db.close();
 });

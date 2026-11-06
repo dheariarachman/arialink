@@ -6,3 +6,6 @@ node_modules/
 .env*
 !.env.example
 *.log
+
+# Local browser automation snapshots and logs
+.playwright-mcp/

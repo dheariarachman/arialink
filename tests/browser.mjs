@@ -1,4 +1,4 @@
-import {api,rememberUser,loadLocal,enqueue,project,synchronize,resolveConflict} from '../lib/offline.mjs';
+import {api,rememberUser,loadLocal,enqueue,project,synchronize,resolveConflict,cacheClosing,explainQueuedBalance,submitGoodsCredit} from '../lib/offline.mjs';
 import {normalize,addDebtPayment,debtSummary,fundsSummary,settleTransaction,transactionDebt,summarize} from '../lib/domain.mjs';
 const list=document.getElementById('results'),status=document.getElementById('status');let count=0;
 function assert(value,label){if(!value)throw new Error(label);}
@@ -124,6 +124,53 @@ try{
   await enqueue(user.id,'transaction',id,tx,false,0);await enqueue(user.id,'transaction',id,tx,true,1);
   const s=await loadLocal(user.id);assert(!s.queue.some(q=>q.recordId===id),'Pembatalan piutang terpisah dari transaksi');
   assert(fundsSummary(project(s)).available===0,'Saldo manual berubah');
+ });
+ await run('Alasan saldo offline tersimpan; penutupan retry dan cache terisolasi per akun',async()=>{
+  const bankId=crypto.randomUUID();
+  await enqueue(user.id,'balance',bankId,normalize('balance',{name:'BCA uji',category:'Rekening',amount:15000}),false,0);
+  try{await enqueue(user.id,'balance',bankId,normalize('balance',{name:'BCA uji',category:'Rekening',amount:14000}),false,1);throw new Error('Penurunan tanpa alasan diterima');}catch(e){assert(e.message.includes('alasan'),'Alasan penurunan tidak divalidasi');}
+  await enqueue(user.id,'balance',bankId,normalize('balance',{name:'BCA uji',category:'Rekening',amount:14000,adjustmentReason:'Biaya operasional'}),false,1);
+  assert(project(await loadLocal(user.id)).find(r=>r.id===bankId).payload.adjustmentReason==='Biaya operasional','Alasan offline hilang');
+  await synchronize(user.id);
+  for(const [kind,payload] of [['debt',{type:'Utang',name:'Utang snapshot',amount:3000}],['debt',{type:'Piutang',name:'Piutang snapshot',amount:2000}],['transaction',{received:4000,credit:{name:'Piutang transaksi snapshot'}}]])await enqueue(user.id,kind,crypto.randomUUID(),normalize(kind,payload),false,0);
+  await synchronize(user.id);
+  const {review}=await api('closings/review'),body=JSON.stringify({id:crypto.randomUUID(),userId:user.id,businessDate:review.businessDate,revision:review.revision,snapshotVersion:review.snapshotVersion,financialRevision:review.financialRevision,previousId:review.previous?.id??null,explanation:'Uji penutupan'});
+  const real=globalThis.fetch;let lost=false;
+  globalThis.fetch=async(...args)=>{const response=await real(...args);if(String(args[0])==='/api/closings'&&!lost){lost=true;throw new TypeError('Simulasi respons penutupan hilang');}return response;};
+  try{await api('closings',{method:'POST',body});throw new Error('Respons seharusnya hilang');}catch(e){assert(e.message.includes('Simulasi'),'Kesalahan tidak sesuai');}finally{globalThis.fetch=real;}
+  const {closing}=await api('closings',{method:'POST',body});await cacheClosing(user.id,closing);await synchronize(user.id);
+  const cached=await loadLocal(user.id);assert(cached.closingReport.closings.length===1,'Penutupan ganda');assert(cached.closingReport.closings[0].total===14000,'Total penutupan salah');assert(cached.closingReport.history.some(h=>h.reason==='Biaya operasional'),'Riwayat alasan hilang');assert(cached.closingReport.closings[0].snapshotVersion===2,'Snapshot belum lengkap');assert(cached.closingReport.closings[0].financial.totals.adjusted===17000,'Grand total snapshot salah');
+  globalThis.fetch=async()=>{throw new TypeError('Offline');};
+  try{assert((await loadLocal(user.id)).closingReport.closings[0].total===14000,'Cache penutupan offline hilang');}finally{globalThis.fetch=real;}
+  const other={id:crypto.randomUUID(),name:'Akun lain',role:'member'};await rememberUser(other);assert(!(await loadLocal(other.id)).closingReport,'Cache penutupan bocor ke akun lain');await rememberUser(user);
+ });
+ await run('Snapshot Piutang tersimpan tetap sama setelah pelunasan data saat ini',async()=>{
+  const state=await loadLocal(user.id),record=state.records.find(r=>r.kind==='debt'&&r.payload.name==='Piutang snapshot');
+  await enqueue(user.id,'debt',record.id,addDebtPayment(record.payload,{id:crypto.randomUUID(),amount:2000,date:record.payload.date}),false,record.version);await synchronize(user.id);
+  const snapshot=(await loadLocal(user.id)).closingReport.closings[0];assert(snapshot.financial.piutang.find(r=>r.id===record.id).remaining===2000,'Pelunasan mengubah snapshot lama');assert(snapshot.financial.totals.adjusted===17000,'Grand total historis berubah');
+ });
+ await run('Antrean versi lama yang kurang alasan dapat dilengkapi tanpa kehilangan urutan',async()=>{
+  const bank=(await loadLocal(user.id)).records.find(r=>r.kind==='balance'&&!r.deleted);
+  await enqueue(user.id,'balance',bank.id,normalize('balance',{...bank.payload,amount:13000,adjustmentReason:'Alasan sementara'}),false,bank.version);
+  // Reproduce an outbox written before adjustment reasons existed.
+  await new Promise((resolve,reject)=>{const req=indexedDB.open('arialink-offline-v1',1);req.onsuccess=()=>{const db=req.result,tx=db.transaction('kv','readwrite'),store=tx.objectStore('kv'),get=store.get('user:'+user.id);get.onsuccess=()=>{const state=get.result;delete state.queue[0].payload.adjustmentReason;store.put(state,'user:'+user.id);};tx.oncomplete=()=>{db.close();resolve();};tx.onerror=()=>reject(tx.error);};req.onerror=()=>reject(req.error);});
+  let rejected;
+  try{await synchronize(user.id);throw new Error('Alasan lama seharusnya diminta');}catch(e){assert(e.reasonMutation&&e.status===400,'Antrean lama tidak dapat dipulihkan');rejected=e.reasonMutation;}
+  assert((await loadLocal(user.id)).queue.length===1,'Perubahan lama dibuang');
+  await explainQueuedBalance(user.id,rejected.id,'Biaya operasional tambahan');await synchronize(user.id);
+  const state=await loadLocal(user.id);assert(!state.queue.length,'Antrean lama masih macet');assert(state.records.find(r=>r.id===bank.id).payload.amount===13000,'Nilai antrean berubah');assert(state.closingReport.closings[0].total===14000,'Penutupan lama ditimpa');
+ });
+ await run('Kredit: respons hilang dipulihkan dari operasi persisten tanpa pembayaran ganda',async()=>{
+  const bank=(await loadLocal(user.id)).records.find(r=>r.kind==='balance'&&!r.deleted),id=crypto.randomUUID(),recordId=crypto.randomUUID(),date=new Date().toLocaleDateString('en-CA',{timeZone:'Asia/Jakarta'});
+  const input={id,recordId,baseVersion:0,action:'create',contract:{item:'Barang fixture',customer:'Pelanggan fixture',cost:5000,price:10000,dp:2000,tenor:5,frequency:'weekly',date,nextDate:'2099-01-01'},payCapital:false,accountId:bank.id,accounts:[{id:bank.id,version:bank.version}]};
+  const real=globalThis.fetch;let lost=false;
+  globalThis.fetch=async(...args)=>{const response=await real(...args);if(String(args[0])==='/api/goods-credits'&&!lost){lost=true;throw new TypeError('Simulasi respons kredit hilang');}return response;};
+  try{await submitGoodsCredit(user.id,input);throw new Error('Respons seharusnya hilang');}catch(e){assert(e.message.includes('Simulasi'),'Kesalahan tidak sesuai');}finally{globalThis.fetch=real;}
+  assert((await loadLocal(user.id)).pendingGoodsCredit.id===id,'Operasi kredit hilang');
+  const other={id:crypto.randomUUID(),name:'Akun lain',role:'member'};await rememberUser(other);assert(!(await loadLocal(other.id)).pendingGoodsCredit,'Operasi kredit bocor ke akun lain');await rememberUser(user);
+  await synchronize(user.id);const state=await loadLocal(user.id),credit=state.records.find(r=>r.id===recordId);
+  assert(!state.pendingGoodsCredit,'Operasi kredit belum selesai');assert(credit.payload.events.length===1,'DP ganda');assert(state.records.find(r=>r.id===bank.id).payload.amount===bank.payload.amount+2000,'Saldo DP salah');
+  await submitGoodsCredit(user.id,input);await synchronize(user.id);assert((await loadLocal(user.id)).records.find(r=>r.id===bank.id).payload.amount===bank.payload.amount+2000,'Retry menambah saldo dua kali');
  });
  status.textContent=`SELESAI: ${count} pengujian browser lulus.`;status.dataset.result='passed';
 }catch(e){status.textContent='GAGAL: '+e.message;status.dataset.result='failed';console.error(e);}
