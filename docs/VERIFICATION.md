@@ -1,4 +1,45 @@
-# Status verifikasi — 30 Oktober 2026
+# Status verifikasi — 1 November 2026
+
+## Snapshot akhir Saldo, Utang, dan Piutang — 1 November 2026
+
+- Scope: satu nilai terakhir per sumber saat **Tutup Hari**. Tidak ada daftar edit satu per satu pada detail Saldo Harian, tidak ada timeline pembayaran baru, dan tidak ada log mutasi utang/piutang baru. Audit Saldo internal yang sudah ada tetap dipertahankan.
+- `npm test`: **43 kasus lulus**; `npm run check` dan `npm run cf:build` lulus. Kasus baru mencakup beberapa edit DANA yang menghasilkan satu nilai akhir Rp 1.000.000, gabungan Piutang langsung/transaksi, admin terpisah, sumber lunas/dihapus, angka nol, batas integer, dan detail lama tetap sama setelah settlement/edit/delete.
+- `0004_financial_snapshots.sql` diuji dengan membandingkan kolom lama penutupan, record, receipt, dan audit sebelum/sesudah migrasi. Tidak ada perubahan nilai lama, semua foreign key valid, dan proteksi immutable mencakup kolom snapshot baru.
+- Tinjauan lama tanpa versi 2/revisi keuangan ditolak dengan instruksi pembaruan. Replay ID penutupan lama yang sudah berhasil tetap mengembalikan hasil semula. Piutang/Utang yang berubah saat tinjauan terbuka, termasuk race setelah pembacaan server, menggagalkan konfirmasi; transaksi biasa tanpa Piutang tidak membatalkan tinjauan keuangan.
+- Penjelasan tetap wajib saat Dana tersedia dan Utang sama-sama turun meskipun Grand total tetap. Penutupan lengkap pertama setelah penutupan legacy menampilkan baseline komponen baru, bukan perbandingan dengan nol.
+- **18 pemeriksaan fixture browser lulus**, termasuk snapshot lengkap di IndexedDB, respons konfirmasi hilang setelah commit dan retry, isolasi akun, snapshot Piutang tetap setelah settlement, dan regresi sinkronisasi/antrean lama.
+- Worker produksi OpenNext dengan D1 lokal terisolasi: review empat total, tiga tab, konfirmasi, stale debt review dan refresh, detail Saldo/Utang/Piutang, shortcut penutupan terakhir, navigasi data saat ini, serta cakupan legacy lulus. DANA tersimpan Rp 1.000.000 sementara data saat ini berubah menjadi Rp 900.000; Utang/Piutang tersimpan masing-masing Rp 200.000 meskipun data saat ini sudah dilunasi.
+- Reload offline dengan service worker mempertahankan detail Piutang historis yang belum lunas. Tombol edit/Bayar/Lunasi tidak tersedia pada snapshot. Link data saat ini membuka versi baru tanpa mengganti snapshot lama.
+- Dokumen tidak meluap pada 360 / 390 / 720 / 768 / 1440 CSS px; tabel lebar tetap dapat digeser. Dialog 390 px berada dalam viewport, Tab menuju dialog, Escape menutup. Ini bukan bukti pengujian zoom browser asli, screen reader, Safari, atau perangkat Android/iOS nyata.
+- Migration 0004 diterapkan ke D1 lokal normal dan produksi setelah backup privat terverifikasi. Jumlah record/receipt/closing produksi tetap sama dengan backup dan foreign-key check kosong; tidak ada penutupan uji di produksi. Version rilis: `19190a78-4bcb-4a20-88dd-2c44a0e8ee56`; versi sebelumnya: `99631fba-2c19-4f3b-9869-8e4f0faae630`. Pemeriksaan Chromium produksi memastikan BUILD_ID cocok dengan build lokal, bundle snapshot lengkap/shortcut terbaru termuat tanpa panel perubahan per-edit, service worker v7 tersedia, dan state/review tanpa sesi tetap 401. Pengujian detail berautentikasi dilakukan di fixture lokal; tidak membuat penutupan produksi.
+
+Bukti fixture: [laporan desktop](screenshots/financial-snapshot-desktop.png), [detail Piutang mobile](screenshots/financial-snapshot-mobile.png), dan [panduan snapshot lengkap](DAILY_BALANCES.md).
+
+## Rilis produksi Saldo Harian — 1 November 2026
+
+- URL: [ARIALink](https://arialink.dheariarachman.workers.dev).
+- Sebelum rilis, export D1 disimpan privat di folder `.wrangler/backups/` yang diabaikan Git. Restore ke SQLite in-memory lulus integrity check dan foreign-key check. Versi Worker sebelumnya dicatat untuk rollback kode.
+- Migration `0003_daily_closings.sql` diterapkan ke D1 produksi `arialink`. Jumlah record dan receipt setelah migrasi sama dengan backup; foreign-key check kosong. Tidak ada data penutupan uji yang dibuat di produksi.
+- `wrangler deploy --dry-run` lulus, kemudian `npm run cf:deploy:built` merilis build OpenNext yang sudah diuji. Version ID: `99631fba-2c19-4f3b-9869-8e4f0faae630`; versi sebelumnya: `3abcfb95-898d-4698-a123-bc7c2b2ad1e1`.
+- Pemeriksaan Chromium pada URL produksi: login tampil, BUILD_ID cocok dengan build lokal, bundle Saldo Harian/konfirmasi baru termuat, service worker memakai cache v6, dan GET state serta closing review tanpa sesi sama-sama menghasilkan 401.
+- Uji end-to-end dengan akun dan penutupan dilakukan pada database lokal terisolasi, bukan melalui penutupan keuangan produksi. Pengguna perlu masuk dan melakukan Tutup Hari untuk membuat snapshot produksi pertama. Pengguna PWA lama mungkin perlu memilih **Perbarui aplikasi** atau memuat ulang.
+- Rollback hanya kode bila diperlukan; pertahankan tabel, riwayat, dan snapshot penutupan sesuai [panduan rollback](DAILY_BALANCES.md).
+
+## Saldo Harian dan Tutup Hari — 1 November 2026
+
+- `npm test`: **36 kasus lulus**, termasuk total dan snapshot server, perbandingan ID sumber, saldo nol, tanggal WIB, hari terlewat, alasan, autentikasi, origin, retry, konkurensi, dan preservasi migrasi.
+- `npm run check` dan `npm run cf:build` lulus pada source akhir. Build OpenNext mencakup kompilasi JSX dan build produksi Next.js.
+- `0003_daily_closings.sql` lulus di D1 lokal terisolasi. Migrasi yang sama diterapkan ke database lokal normal proyek; tidak ada penutupan uji yang dibuat di database normal. Pada tahap pengujian lokal belum ada migrasi remote atau deployment produksi; rilis berikutnya dicatat di atas.
+- Chromium dengan Worker OpenNext dan D1 lokal terisolasi: Laporan → Saldo Harian, tinjauan Rp 15.000 → Rp 14.000, alasan wajib, konfirmasi, nama/waktu penutup, perbandingan rekening/kas, dan riwayat alasan lulus. Semua nilai pada screenshot adalah fixture pengujian.
+- Perubahan rekening saat tinjauan terbuka menghasilkan penolakan stale review. Muat ulang tinjauan dan konfirmasi menyimpan tepat satu penutupan. Uji SQL juga menyisipkan perubahan setelah pembacaan server dan mensimulasikan pergantian tanggal sebelum conditional INSERT; keduanya menolak konfirmasi lama.
+- Dua penutup bersamaan menghasilkan satu penutupan. Retry ID yang sama mengembalikan hasil yang sama. UPDATE/DELETE snapshot ditolak oleh database. Input total, nama penutup, dan snapshot dari klien tidak mengubah hasil server.
+- Setelah penutupan Rp 14.000, perubahan rekening menurunkan saldo terkini menjadi Rp 13.000; UI menampilkan keduanya dan snapshot tetap Rp 14.000. Recovery antrean lama berikutnya mengubah saldo terkini menjadi Rp 12.000 tanpa menimpa penutupan.
+- PWA produksi: service worker siap, jaringan browser diputus, reload offline, navigasi kembali ke Saldo Harian, dan pembacaan detail/alasan penutupan lulus. Tutup Hari tetap online saja.
+- **17 pemeriksaan fixture browser lulus**, mencakup regresi IndexedDB/sinkronisasi sebelumnya serta alasan offline, respons penutupan hilang setelah commit dan retry, isolasi cache per akun, dan perbaikan antrean versi lama yang belum memiliki alasan. Dialog recovery juga diuji pada UI produksi lokal.
+- Lebar 360 / 390 / 720 / 768 / 1440 CSS px tidak meluapkan dokumen; tabel dapat digeser horizontal. Dialog pada 390 px berada dalam viewport. Tab menempatkan fokus di dialog dan Escape menutupnya. Pengujian ini tidak membuktikan zoom browser asli, perangkat iOS/Android nyata, Safari, atau screen reader.
+- Audit receipt saldo pada salinan lokal menemukan versi berurutan; receipt tidak dipakai untuk membuat penutupan historis karena tidak membuktikan konfirmasi pengguna. Riwayat pendukung baru mulai dari migrasi dan waktu awalnya ditampilkan pada detail.
+
+Bukti: [laporan desktop](screenshots/daily-balance-desktop.png), [detail mobile](screenshots/daily-balance-mobile-detail.png), dan [aturan pemakaian, migrasi, serta rollback](DAILY_BALANCES.md). Bagian di bawah mencatat pemeriksaan versi sebelumnya.
 
 ## Piutang transaksi dan pelunasan penuh — 30 Oktober 2026
 
@@ -65,3 +106,17 @@ Hasil ringkas tersimpan pada [debt-browser-results.json](screenshots/debt-browse
 ## Batas pemeriksaan
 
 Instalasi PWA pada perangkat Android/iOS nyata, Safari, pengujian screen reader, dan akses database D1 remote belum diuji. Tidak ada migrasi remote, resource cloud, atau deployment produksi yang dilakukan. Terapkan migrasi baru sebelum deployment sesuai [DEPLOYMENT.md](DEPLOYMENT.md) dan [aturan utang / piutang](DEBTS.md).
+
+## Kredit Barang — 7 November 2026
+
+- `npm test`: 53/53 lulus, termasuk jadwal mingguan/bulanan, DP, akhir bulan/tahun kabisat, pembulatan, pembayaran sebagian, pelunasan, pembatalan, laporan historis, periode berjalan, konflik versi, validasi sumber saldo, rollback batch, dan saldo kas.
+- `npm run check`, `npm run build`, dan `npm run cf:build`: lulus.
+- Fixture IndexedDB: 19 skenario browser lulus, termasuk respons operasi kredit hilang, retry menggunakan ID sama, dan isolasi operasi per akun.
+- Preview Cloudflare lokal port 8791 memakai database D1 terisolasi `/tmp/arialink-goods-credit-preview`; migrasi 0001–0005 berhasil. Tidak memakai database produksi.
+- Alur UI terverifikasi: membuat kredit modal Rp2.000.000/harga Rp3.000.000/DP Rp300.000/10 kali; saldo awal Rp5.000.000 menjadi Rp3.300.000 setelah modal dan DP; pembayaran Rp150.000 menambah saldo dan pembatalannya mengembalikan saldo menjadi Rp3.300.000. Riwayat pembayaran dan pembatalan tetap tersimpan.
+- Desktop 1440 px dan mobile 390 px diperiksa. Lebar dokumen mobile 390 px; detail dialog berada dalam viewport dan tabel dapat digeser.
+- PWA produksi lokal: service worker aktif; reload tanpa jaringan tetap menampilkan kredit tersimpan dan tombol pencatatan baru dinonaktifkan.
+- Bukti: [desktop Kredit Barang](screenshots/goods-credit-desktop.png), [detail mobile](screenshots/goods-credit-mobile-detail.png).
+- Batasan: pencatatan baru memerlukan internet; kontrak dan pembayaran modal belum dapat disunting/dibatalkan. Koreksi pembayaran cicilan memakai pembatalan dan pembayaran pengganti. Belum migrasi/deploy produksi.
+
+Panduan: [GOODS_CREDIT.md](GOODS_CREDIT.md).

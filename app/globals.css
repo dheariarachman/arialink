@@ -1360,3 +1360,31 @@ dialog.navigation-drawer { box-shadow: none; }
 .debt-payments b { font-variant-numeric: tabular-nums; }
 
 .transaction-fields { border: 0; padding: 0; margin: 0; min-width: 0; }
+
+/* Daily closing report reuses the shared report, table and dialog geometry. */
+.closing-dialog { width: min(820px,calc(100% - 32px)); }
+.closing-form,.closing-detail { margin-top: var(--space-4); }
+.closing-form textarea { display: block; width: 100%; min-width: 0; margin-top: var(--space-2); padding: var(--space-3); border: 1px solid var(--line); border-radius: var(--radius-lg); background: var(--surface); color: var(--ink); font: inherit; resize: vertical; }
+.closing-form textarea:focus-visible { outline: 3px solid #8b9bb7; outline-offset: 3px; }
+.closing-note { white-space: pre-wrap; overflow-wrap: anywhere; }
+.closing-history,.closing-cash { margin-top: var(--section-gap); }
+.closing-cash summary { cursor: pointer; padding: var(--space-3) 0; font-size: var(--text-sm); }
+.closing-cash p { font-size: var(--text-sm); }
+.closing-history h3 { font-size: var(--text-base); margin-bottom: var(--section-gap); }
+.closing-history-row { display: flex; flex-direction: column; gap: var(--space-1); padding: var(--row-padding) 0; border-bottom: 1px solid var(--line); font-size: var(--text-sm); overflow-wrap: anywhere; white-space: pre-wrap; }
+.closing-history-row:last-child { border-bottom: 0; padding-bottom: 0; }
+@media (max-width: 767px) { .closing-form textarea { font-size: var(--text-lg); } .closing-cash summary { min-height: 44px; } }
+
+.closing-totals { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: var(--section-gap); margin: var(--section-gap) 0; }
+.closing-total { padding: var(--card-padding); display: flex; flex-direction: column; gap: var(--space-1); min-width: 0; overflow-wrap: anywhere; }
+.closing-total span,.closing-total small { font-size: var(--text-sm); color: var(--muted); }
+.closing-total strong { font-size: var(--text-xl); font-variant-numeric: tabular-nums; }
+.closing-tab-content,.closing-saved-item { margin: var(--section-gap) 0; }
+.closing-saved-item h3 { margin: var(--section-gap) 0; }
+.closing-report-table { min-width: 960px; }
+@media (max-width: 767px) { .closing-totals { grid-template-columns: minmax(0,1fr); } }
+
+/* Goods credit follows the shared compact card and form geometry. */
+.credit-fields{display:flex;flex-direction:column;gap:var(--section-gap);border:0;padding:0;margin:0;min-width:0}
+.credit-cash{border:1px solid var(--line);border-radius:var(--radius-lg);padding:var(--card-padding);min-width:0}
+.credit-cash legend{font-weight:600;padding:0 var(--space-2)}
