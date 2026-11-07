@@ -130,3 +130,7 @@ Snapshot data bersama dimuat seluruhnya untuk cache offline; belum ada paginatio
 ### Kredit Barang
 
 Versi Kredit Barang membutuhkan migrasi `0005_goods_credit.sql` sebelum aplikasi baru digunakan. Migrasi menambah tabel kontrak dan receipt operasi kredit, tanpa memindahkan transaksi utama. Ikuti prosedur migrasi remote dan deployment di atas; pengujian fitur ini hanya menerapkan migrasi ke database lokal terisolasi. Aturan penggunaan dan batasan ada di [GOODS_CREDIT.md](GOODS_CREDIT.md).
+
+### Integrasi Kredit Barang ke Piutang
+
+Terapkan `0006_credit_receivables.sql` sebelum deploy versi integrasi. Migrasi hanya menambahkan trigger revisi keuangan pada `goods_credits`; kontrak dan snapshot historis tidak ditulis ulang. Penutupan baru memakai snapshot versi 3. Klien lama yang mengirim tinjauan versi 2 harus memuat ulang aplikasi/tinjauan. Integrasi ini tidak memerlukan penyalinan kontrak menjadi catatan utang/piutang.

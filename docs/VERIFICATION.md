@@ -120,3 +120,15 @@ Instalasi PWA pada perangkat Android/iOS nyata, Safari, pengujian screen reader,
 - Batasan: pencatatan baru memerlukan internet; kontrak dan pembayaran modal belum dapat disunting/dibatalkan. Koreksi pembayaran cicilan memakai pembatalan dan pembayaran pengganti. Belum migrasi/deploy produksi.
 
 Panduan: [GOODS_CREDIT.md](GOODS_CREDIT.md).
+
+## Integrasi Kredit Barang ke Piutang — 7 November 2026
+
+- `npm test`: 58/58 lulus; `npm run check`, `npm run build`, `npm run cf:build`, dan `git diff --check` lulus.
+- Piutang menggunakan proyeksi kontrak asli. Tidak dibuat record debt baru. Tes mencakup DP, pembayaran sebagian, retry, pembatalan, lunas, dua kontrak pelanggan sama, sumber manual/transaksi, dan kesesuaian total live dengan snapshot.
+- Migrasi 0006 diuji mempertahankan kontrak dan snapshot versi 2. Snapshot baru versi 3 menyimpan piutang kredit dan menolak tinjauan versi lama/perubahan data saat konfirmasi, termasuk perubahan kontrak tanpa mutasi saldo.
+- Browser pada Cloudflare preview lokal (database uji terisolasi): filter sumber Kredit Barang, detail kontrak, Catat cicilan dari menu Piutang, pembayaran Rp150.000 dan koreksi berhasil. Piutang Rp2.700.000 menjadi Rp2.550.000 dan kembali; grand total tetap Rp6.000.000.
+- Tutup Hari berhasil menyimpan piutang Kredit Barang Rp2.700.000. Dari detail snapshot, Buka data saat ini membuka kontrak asli. Pelunasan berikutnya menurunkan piutang live ke nol, sementara snapshot tersimpan tetap Rp2.700.000. Filter sembunyikan lunas bekerja.
+- Desktop 1440 px dan mobile 390 px diperiksa, tanpa overflow halaman mobile. Bukti: [desktop](screenshots/credit-receivables-desktop.png), [mobile](screenshots/credit-receivables-mobile.png).
+- Migrasi 0006 diterapkan pada D1 lokal default dan database preview terisolasi. Database/deployment produksi tidak diubah.
+
+- PWA preview: setelah update service worker, reload offline masih dapat membuka piutang kredit yang lunas dan detail kontrak dari cache.
