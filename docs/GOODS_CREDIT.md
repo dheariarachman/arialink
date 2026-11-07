@@ -16,7 +16,7 @@ Submenu Kredit Barang menyediakan penjualan cicilan mingguan/bulanan, DP sebagai
 
 Laporan harian/mingguan/bulanan menampilkan penerimaan bersih (DP + cicilan − pembatalan) dan modal dibayar dari saldo pada periode tersebut. Sisa piutang, tunggakan, modal kontrak, potensi profit, dan surplus merupakan posisi akumulasi pada akhir periode; periode berjalan/future dibatasi sampai hari ini agar cicilan mendatang tidak dianggap menunggak.
 
-Potensi profit = harga jual − modal, dengan asumsi seluruh tagihan lunas. Surplus penerimaan atas modal dihitung per kontrak sebagai `max(0, penerimaan bersih − modal)`; ini indikator pemulihan modal, bukan laba akuntansi periode. Piutang Kredit Barang tidak ditambahkan ke ringkasan Utang & Piutang atau laporan laba transaksi utama. Saldo aktual dan riwayat perubahan saldo utama tetap mencerminkan mutasi kredit.
+Potensi profit = harga jual − modal, dengan asumsi seluruh tagihan lunas. Surplus penerimaan atas modal dihitung per kontrak sebagai `max(0, penerimaan bersih − modal)`; ini indikator pemulihan modal, bukan laba akuntansi periode. Sisa tagihan Kredit Barang otomatis masuk ke daftar dan ringkasan Utang & Piutang, Beranda, serta snapshot penutupan baru (versi 3). Kontrak dibaca langsung tanpa membuat catatan piutang duplikat. Penerimaan dan profit tetap dilaporkan di modul kredit, bukan laporan laba transaksi utama. Saldo aktual dan riwayat perubahan saldo utama tetap mencerminkan mutasi kredit.
 
 ## Konsistensi dan offline
 
@@ -31,3 +31,10 @@ Terapkan `0005_goods_credit.sql` sebelum menjalankan versi aplikasi ini. Migrasi
 Pengujian: `npm test`, `npm run check`, `npm run build`, `npm run cf:build`; fixture IndexedDB `npm run test:browser`. Runtime D1 diuji menggunakan preview Cloudflare lokal dengan database terisolasi `/tmp/arialink-goods-credit-preview`, bukan database produksi.
 
 Bukti visual: [desktop](screenshots/goods-credit-desktop.png), [detail mobile](screenshots/goods-credit-mobile-detail.png).
+
+## Integrasi Piutang
+
+- Filter sumber pada Utang & Piutang: Catatan langsung, Transaksi, Kredit Barang. Dua kontrak pelanggan yang sama tetap terpisah. Piutang manual yang kebetulan mewakili kontrak sama tidak digabung otomatis.
+- Detail dan Catat cicilan membuka kontrak/form Kredit Barang yang sama; pembayaran tidak melalui pelunasan piutang biasa. Pembayaran otomatis memindahkan nilai dari piutang ke saldo, sehingga grand total tidak naik hanya karena cicilan dibayar.
+- Migrasi `0006_credit_receivables.sql` diperlukan sebelum menjalankan versi integrasi. Migrasi menambahkan deteksi perubahan kontrak untuk penutupan; tidak memindahkan data kontrak atau mengubah penutupan lama.
+- Snapshot versi 1/2 tidak diisi ulang. Versi 2 diberi keterangan belum mencakup Kredit Barang. Perbandingan piutang/grand total dengan versi 3 ditandai perubahan cakupan, tanpa delta langsung yang menyesatkan. Saldo dan utang tetap dapat dibandingkan.

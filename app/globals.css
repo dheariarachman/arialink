@@ -62,6 +62,7 @@
   --border-thin: 1px;
   --nav-height: 36px;
   --input-height: 40px;
+  --touch-target-size: 44px;
   --filter-height: 28px;
   --kpi-height: 138px;
   --table-row-height: 28px;
@@ -1386,5 +1387,16 @@ dialog.navigation-drawer { box-shadow: none; }
 
 /* Goods credit follows the shared compact card and form geometry. */
 .credit-fields{display:flex;flex-direction:column;gap:var(--section-gap);border:0;padding:0;margin:0;min-width:0}
+.credit-fields .debt-hide-settled{min-height:var(--touch-target-size);white-space:normal;cursor:pointer}
+.credit-fields input[type="checkbox"]{width:var(--space-4);height:var(--space-4);min-height:var(--space-4);flex:none;margin:0;padding:0}
 .credit-cash{border:1px solid var(--line);border-radius:var(--radius-lg);padding:var(--card-padding);min-width:0}
 .credit-cash legend{font-weight:600;padding:0 var(--space-2)}
+
+/* Shared debt and goods-credit detail columns, including wrapped labels. */
+.record-details { margin: 0 0 var(--section-gap); }
+.record-details > div { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); align-items: start; gap: var(--row-gap); padding: var(--row-padding) 0; border-bottom: var(--border-thin) solid var(--line); }
+.record-details > div:first-child { padding-top: 0; }
+.record-details > div:last-child { padding-bottom: 0; border-bottom: 0; }
+.record-details dt,.record-details dd { min-width: 0; margin: 0; overflow-wrap: anywhere; font-size: var(--text-md); line-height: var(--leading-base); }
+.record-details dt { color: var(--muted); }
+.record-details dd { text-align: right; font-weight: var(--font-semibold); font-variant-numeric: tabular-nums; }

@@ -25,7 +25,7 @@ test('closing saves one final DANA value and final debt positions, not edits or 
  settled=await write('debt',addDebtPayment(settled.payload,{id:crypto.randomUUID(),amount:50000,date:settled.payload.date}),settled);
  const deleted=await write('debt',{type:'Utang',name:'Dihapus',amount:900000});await write('debt',deleted.payload,deleted,true);
  const request=await input(),closing=await closeDay(db,user,{...request,financial:{totals:{adjusted:999}}});
- assert.equal(closing.snapshotVersion,2);assert.equal(closing.snapshot.filter(r=>r.id===dana.id).length,1);assert.equal(closing.snapshot.find(r=>r.id===dana.id).amount,1000000);
+ assert.equal(closing.snapshotVersion,3);assert.equal(closing.snapshot.filter(r=>r.id===dana.id).length,1);assert.equal(closing.snapshot.find(r=>r.id===dana.id).amount,1000000);
  assert.deepEqual(closing.financial.totals,{available:1000000,utang:300000,piutang:355000,adjusted:1055000});
  assert.equal(closing.financial.piutang.length,3);assert.equal(closing.financial.utang.length,1);
  const saved=closing.financial.piutang.find(r=>r.id===credit.id);assert.equal(saved.sourceKind,'transaction');assert.equal(saved.amount,155000);assert.equal(saved.remaining,155000);assert.equal(saved.transaction.separateAdmin,5000);
