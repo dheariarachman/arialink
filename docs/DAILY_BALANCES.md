@@ -72,3 +72,7 @@ Rollback kode dapat mempertahankan skema baru. Jangan menghapus snapshot, audit,
 Belum ada koreksi/reopening, notifikasi, ekspor laporan, atau penutupan otomatis. Snapshot dan laporan masih dimuat penuh mengikuti model cache aplikasi saat ini; pagination/retensi perlu dirancang sebelum volume tinggi. Tidak ada backfill Utang/Piutang untuk penutupan lama atau pembuktian otomatis hubungan pembayaran utang dengan perubahan kas.
 
 Rujukan implementasi: [D1 database bindings](https://developers.cloudflare.com/d1/worker-api/d1-database/), [SQL dan JSON D1](https://developers.cloudflare.com/d1/sql-api/sql-statements/), [migrasi Wrangler](https://developers.cloudflare.com/d1/wrangler-commands/#migrations-apply).
+
+## Snapshot versi 4: modal kredit kembali terlebih dahulu
+
+Piutang Kredit Barang hanya menghitung modal belum kembali, dibatasi sisa tagihan pelanggan. Penutupan menyimpan modal awal, modal kembali, piutang modal, dan sisa tagihan kontrak secara terpisah. Piutang modal nol tidak berarti kontrak lunas. Versi 3 tetap menyimpan seluruh sisa harga jual; versi 1/2 belum mencakup Kredit Barang. Data lama tidak diisi ulang. Selisih piutang/grand total antardasar tidak ditampilkan sebagai delta langsung; saldo dan utang tetap dapat dibandingkan. Terapkan migrasi 0007 sebelum menjalankan kode versi ini.
