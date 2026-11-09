@@ -132,3 +132,15 @@ Panduan: [GOODS_CREDIT.md](GOODS_CREDIT.md).
 - Migrasi 0006 diterapkan pada D1 lokal default dan database preview terisolasi. Database/deployment produksi tidak diubah.
 
 - PWA preview: setelah update service worker, reload offline masih dapat membuka piutang kredit yang lunas dan detail kontrak dari cache.
+
+## Modal kembali terlebih dahulu — 8 November 2026
+
+- `npm test`: 63/63 lulus. `npm run check`, `npm run cf:build` (termasuk build Next.js), dan `git diff --check` lulus.
+- Regresi mencakup DP, batas modal tepat, pembayaran melewati modal, surplus per periode, koreksi yang membuka kembali piutang modal, modal nol, penjualan rugi, pelunasan, tanggal historis, periode masa depan, serta retry pembayaran.
+- Piutang manual/transaksi biasa tidak berubah. Saldo tetap mengikuti penerimaan penuh. Kontrak, pembayaran, rekening, receipt, dan snapshot versi 3 tidak ditulis ulang oleh migrasi 0007; pengujian membandingkan seluruh baris sebelum/sesudah.
+- Cloudflare preview lokal memakai database uji terisolasi `/tmp/arialink-goods-credit-preview`. Kontrak uji modal Rp2.000.000, harga Rp3.000.000, DP Rp300.000: piutang modal Rp1.700.000, sisa tagihan Rp2.700.000. Setelah pembayaran bersih Rp1.900.000: piutang modal Rp100.000. Setelah Rp2.200.000: piutang modal nol, sisa tagihan Rp800.000, status Modal kembali · Cicilan berjalan, tombol cicilan tetap tersedia meskipun filter sembunyikan lunas aktif.
+- Laporan menampilkan surplus Rp200.000 untuk kontrak tersebut. Daftar/detail operasional tidak menampilkan angka potensi profit/surplus. Desktop 1440 px dan mobile 390 px diperiksa; lebar dokumen mobile tetap 390 px.
+- Tutup Hari versi 4 menyimpan `capital-first`, modal awal/kembali, piutang modal nol, dan sisa tagihan Rp800.000. Perbandingan terhadap versi 3 menampilkan perubahan dasar dan meniadakan delta langsung piutang/grand total. Koreksi pembayaran Rp300.000 membuka piutang modal Rp100.000; snapshot versi 4 tetap identik.
+- PWA diperbarui lalu dimuat ulang tanpa jaringan: piutang modal Rp100.000 dan sisa tagihan Rp1.100.000 tetap terbaca dari cache; pencatatan kredit baru dinonaktifkan.
+- Migrasi 0007 diterapkan pada database lokal default dan preview terisolasi. Tidak ada migrasi/deployment produksi.
+- Bukti: [piutang desktop](screenshots/capital-first-receivables-desktop.png), [piutang mobile](screenshots/capital-first-receivables-mobile.png), [laporan kredit](screenshots/capital-first-report-desktop.png), [penutupan versi 4](screenshots/capital-first-closing-desktop.png).

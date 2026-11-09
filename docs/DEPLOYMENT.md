@@ -134,3 +134,7 @@ Versi Kredit Barang membutuhkan migrasi `0005_goods_credit.sql` sebelum aplikasi
 ### Integrasi Kredit Barang ke Piutang
 
 Terapkan `0006_credit_receivables.sql` sebelum deploy versi integrasi. Migrasi hanya menambahkan trigger revisi keuangan pada `goods_credits`; kontrak dan snapshot historis tidak ditulis ulang. Penutupan baru memakai snapshot versi 3. Klien lama yang mengirim tinjauan versi 2 harus memuat ulang aplikasi/tinjauan. Integrasi ini tidak memerlukan penyalinan kontrak menjadi catatan utang/piutang.
+
+### Piutang modal terlebih dahulu
+
+Untuk versi terbaru, terapkan migrasi sampai `0007_capital_first_receivables.sql` sebelum deployment. Migrasi menambahkan penanda dasar keuangan dan revisi; tidak menulis ulang saldo, kontrak, pembayaran, atau snapshot. Penutupan baru memakai versi 4 (`capital-first`); tinjauan versi 3 ditolak dan perlu dimuat ulang. Perbarui PWA agar perhitungan offline memakai kode baru. Versi 3 historis tetap dihitung berdasarkan seluruh sisa harga jual; perbandingan piutang/grand total ke versi 4 ditandai perubahan dasar.

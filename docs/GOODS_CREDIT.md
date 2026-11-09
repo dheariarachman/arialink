@@ -14,9 +14,9 @@ Submenu Kredit Barang menyediakan penjualan cicilan mingguan/bulanan, DP sebagai
 
 ## Laporan
 
-Laporan harian/mingguan/bulanan menampilkan penerimaan bersih (DP + cicilan − pembatalan) dan modal dibayar dari saldo pada periode tersebut. Sisa piutang, tunggakan, modal kontrak, potensi profit, dan surplus merupakan posisi akumulasi pada akhir periode; periode berjalan/future dibatasi sampai hari ini agar cicilan mendatang tidak dianggap menunggak.
+Laporan harian/mingguan/bulanan menampilkan penerimaan bersih (DP + cicilan − pembatalan) dan modal dibayar dari saldo pada periode tersebut. Sisa tagihan pelanggan, piutang modal, tunggakan, modal kontrak, potensi profit, dan surplus merupakan posisi akumulasi pada akhir periode; periode berjalan/future dibatasi sampai hari ini agar cicilan mendatang tidak dianggap menunggak.
 
-Potensi profit = harga jual − modal, dengan asumsi seluruh tagihan lunas. Surplus penerimaan atas modal dihitung per kontrak sebagai `max(0, penerimaan bersih − modal)`; ini indikator pemulihan modal, bukan laba akuntansi periode. Sisa tagihan Kredit Barang otomatis masuk ke daftar dan ringkasan Utang & Piutang, Beranda, serta snapshot penutupan baru (versi 3). Kontrak dibaca langsung tanpa membuat catatan piutang duplikat. Penerimaan dan profit tetap dilaporkan di modul kredit, bukan laporan laba transaksi utama. Saldo aktual dan riwayat perubahan saldo utama tetap mencerminkan mutasi kredit.
+Potensi profit = harga jual − modal, dengan asumsi seluruh tagihan lunas. Surplus penerimaan atas modal dihitung per kontrak sebagai `max(0, penerimaan bersih − modal)`; ini indikator pemulihan modal, bukan laba akuntansi periode. Modal Kredit Barang yang belum kembali otomatis masuk ke daftar dan ringkasan Utang & Piutang, Beranda, serta snapshot penutupan baru (versi 4). Sisa tagihan pelanggan tetap disimpan dan ditampilkan terpisah, tanpa mengurangi kewajiban pelanggan. Kontrak dibaca langsung tanpa membuat catatan piutang duplikat. Penerimaan dan profit tetap dilaporkan di modul kredit, bukan laporan laba transaksi utama. Saldo aktual dan riwayat perubahan saldo utama tetap mencerminkan mutasi kredit.
 
 ## Konsistensi dan offline
 
@@ -26,7 +26,7 @@ Operasi disimpan di IndexedDB sebelum dikirim. Jika respons terputus, sinkronisa
 
 ## Migrasi dan verifikasi
 
-Terapkan `0005_goods_credit.sql` sebelum menjalankan versi aplikasi ini. Migrasi menambah `goods_credits` dan `goods_credit_operations` tanpa mengubah data lama. Ikuti `DEPLOYMENT.md` untuk target lokal/produksi; implementasi ini belum diterapkan ke produksi.
+Terapkan migrasi berurutan sampai `0007_capital_first_receivables.sql` sebelum menjalankan versi aplikasi ini. Migrasi menambah `goods_credits` dan `goods_credit_operations` tanpa mengubah data lama. Ikuti `DEPLOYMENT.md` untuk target lokal/produksi; implementasi ini belum diterapkan ke produksi.
 
 Pengujian: `npm test`, `npm run check`, `npm run build`, `npm run cf:build`; fixture IndexedDB `npm run test:browser`. Runtime D1 diuji menggunakan preview Cloudflare lokal dengan database terisolasi `/tmp/arialink-goods-credit-preview`, bukan database produksi.
 
@@ -35,6 +35,16 @@ Bukti visual: [desktop](screenshots/goods-credit-desktop.png), [detail mobile](s
 ## Integrasi Piutang
 
 - Filter sumber pada Utang & Piutang: Catatan langsung, Transaksi, Kredit Barang. Dua kontrak pelanggan yang sama tetap terpisah. Piutang manual yang kebetulan mewakili kontrak sama tidak digabung otomatis.
-- Detail dan Catat cicilan membuka kontrak/form Kredit Barang yang sama; pembayaran tidak melalui pelunasan piutang biasa. Pembayaran otomatis memindahkan nilai dari piutang ke saldo, sehingga grand total tidak naik hanya karena cicilan dibayar.
+- Detail dan Catat cicilan membuka kontrak/form Kredit Barang yang sama; pembayaran tidak melalui pelunasan piutang biasa. Pembayaran mengembalikan modal terlebih dahulu. Sampai modal tertutup, penerimaan memindahkan nilai piutang ke saldo. Bagian penerimaan yang melewati modal menambah saldo dan grand total, sedangkan piutang modal tetap nol.
 - Migrasi `0006_credit_receivables.sql` diperlukan sebelum menjalankan versi integrasi. Migrasi menambahkan deteksi perubahan kontrak untuk penutupan; tidak memindahkan data kontrak atau mengubah penutupan lama.
-- Snapshot versi 1/2 tidak diisi ulang. Versi 2 diberi keterangan belum mencakup Kredit Barang. Perbandingan piutang/grand total dengan versi 3 ditandai perubahan cakupan, tanpa delta langsung yang menyesatkan. Saldo dan utang tetap dapat dibandingkan.
+- Snapshot versi 1/2/3 tidak diisi ulang. Versi 1/2 belum mencakup Kredit Barang; versi 3 memakai seluruh sisa harga jual. Perbandingan piutang/grand total antardasar ditandai perubahan dasar, tanpa delta langsung yang menyesatkan. Saldo dan utang tetap dapat dibandingkan.
+
+## Modal kembali terlebih dahulu (versi 4)
+
+- Pembayaran bersih adalah DP + cicilan − pembatalan. Modal kembali = `min(modal, pembayaran bersih)`. Piutang modal = `min(sisa tagihan, max(0, modal − pembayaran bersih))`. Batas sisa tagihan mencegah piutang melebihi kewajiban pelanggan pada penjualan di bawah modal.
+- Surplus atas modal = `max(0, pembayaran bersih − modal)`. Surplus tambahan periode adalah perubahan surplus kumulatif antara sebelum awal dan akhir periode. Nilainya dapat negatif akibat koreksi. Modal kembali periode juga bersih setelah koreksi.
+- Jika harga jual di bawah modal, piutang menjadi nol setelah harga jual dilunasi; kekurangan modal menjadi kerugian kontrak lunas. Pembatalan pembayaran dapat membuka kembali piutang dan membalik pengakuan kerugian pada periode koreksi.
+- Modal nol tidak menghasilkan piutang modal, tetapi kontrak tetap berjalan sampai seluruh tagihan lunas. Status dan filter lunas mengacu pada pelunasan harga jual, bukan piutang modal nol.
+- Informasi profit/surplus/kerugian hanya ditampilkan di Laporan kredit. Daftar dan detail operasional menyimpan sisa tagihan utuh, jadwal, modal kembali, serta piutang modal.
+- Migrasi 0007 menambahkan penanda `credit_basis` dan menaikkan revisi keuangan. Kontrak, riwayat pembayaran, saldo, receipt, dan snapshot lama tidak ditulis ulang. Snapshot baru menyimpan `creditBasis: capital-first` dan rincian sisa tagihan kontrak. Klien dengan tinjauan versi 3 harus memuat ulang.
+- Rollback aplikasi: jangan kembali memakai penutupan versi 3 pada database yang sudah menyimpan versi 4. Riwayat lama harus tetap dibaca sesuai versinya; jangan mengubah data snapshot untuk rollback. Saldo/pembayaran asli tetap dapat dipakai untuk rekalkulasi tampilan setelah pembaruan aplikasi.

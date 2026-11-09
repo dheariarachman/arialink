@@ -33,7 +33,7 @@ test('capital + DP commit once, credit reports remain separate and shared balanc
  assert.deepEqual(await changeGoodsCredit(db,user,create),first);assert.equal((await balance(db)).version,2);
  const records=[...await snapshot(db),...await goodsCredits(db)],report=goodsCreditReport(records,'2026-01-01','2026-01-31');
  assert.equal(report.received,300000);assert.equal(report.capitalOut,2000000);assert.equal(report.remaining,2700000);assert.equal(report.potentialProfit,1000000);
- assert.equal(summarize(records,'2026-01-01','2026-12-31').count,0);assert.equal(fundsSummary(records).piutang,2700000);assert.equal(fundsSummary(records).available,3300000);
+ assert.equal(summarize(records,'2026-01-01','2026-12-31').count,0);assert.equal(fundsSummary(records).piutang,1700000);assert.equal(fundsSummary(records).available,3300000);
  assert.equal((await db.prepare('SELECT count(*) AS n FROM balance_history').first()).n,2);
  db.close();
 });
