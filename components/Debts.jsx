@@ -25,24 +25,26 @@ export function DebtPanel({records,onOpen,onSettle}){
   ?!!r.goodsCredit&&(status==='Semua'||r.summary.status===status)
   :!r.goodsCredit&&(filter==='Semua'||r.payload.type===filter)&&(source==='Semua sumber'||debtSource(r)===source)&&(!hideSettled||!debtRecordSummary(r).settled));
  const label=credit?'kredit barang':filter==='Semua'?'utang & piutang':filter.toLowerCase();
- const sources=[['Transaksi','BRILink'],['Catatan langsung','Manual'],['Kredit Barang','Modal Kredit Barang']];
+ const sources=[['Transaksi','BRILink'],['Catatan langsung','Manual'],['Kredit Barang','Kredit Barang']];
  const totals=sources.map(([source,label])=>({label,amount:records.filter(r=>r.payload.type==='Piutang'&&debtSource(r)===source).reduce((sum,r)=>sum+debtRecordSummary(r).remaining,0)}));
- return <Card as="section" className="panel page-wide debt-panel">
-  <div className="debt-overview"><p className="subtle">Total seluruh sumber; tab hanya mengatur daftar.</p><dl className="debt-source-totals" aria-label="Rincian sisa piutang">{totals.map(({label,amount})=><div key={label}><dt>{label}</dt><dd>{rupiah(amount)}</dd></div>)}</dl></div>
-  <div className="tabs debt-source-tabs" role="group" aria-label="Sumber daftar utang dan piutang">{['ARIALink','Kredit Barang'].map(t=><Button key={t} aria-pressed={tab===t} className={tab===t?'selected':''} onClick={()=>setTab(t)}>{t}</Button>)}</div>
-  <div className="section-title"><div><h2>Daftar {label} <span className="tag">{visible.length}</span></h2><p className="subtle">{credit?'Sisa tagihan untuk penagihan. Hanya modal belum kembali yang masuk ke total piutang.':'Piutang transaksi BRILink dan catatan utang / piutang manual.'}</p></div>
-   <div className="debt-list-filters">{credit?<NativeSelect aria-label="Status kredit" value={status} onChange={e=>setStatus(e.target.value)}>{['Semua','Berjalan','Menunggak','Lunas'].map(s=><option key={s}>{s}</option>)}</NativeSelect>:<>
-    <NativeSelect aria-label="Sumber utang dan piutang" value={source} onChange={e=>setSource(e.target.value)}><option>Semua sumber</option><option value="Transaksi">BRILink</option><option value="Catatan langsung">Manual</option></NativeSelect>
-    <label className="debt-hide-settled"><input type="checkbox" checked={hideSettled} onChange={e=>setHideSettled(e.target.checked)}/>Sembunyikan yang lunas</label>
-    <div className="tabs" role="group" aria-label="Filter jenis utang dan piutang">{['Semua','Utang','Piutang'].map(t=><Button key={t} aria-pressed={filter===t} className={filter===t?'selected':''} onClick={()=>setFilter(t)}>{t}</Button>)}</div>
-   </>}</div>
-  </div>
+ return <>
+  <Card as="section" className="panel page-wide debt-overview" aria-labelledby="debt-overview-title"><div className="section-title"><h2 id="debt-overview-title">Rincian sisa piutang</h2></div><dl className="debt-source-totals" aria-label="Rincian sisa piutang">{totals.map(({label,amount})=><div key={label}><dt>{label}</dt><dd>{rupiah(amount)}</dd>{label==='Kredit Barang'&&<small>Modal belum kembali</small>}</div>)}</dl></Card>
+  <div className="page-wide debt-list-section">
+   <div className="tabs debt-source-tabs" role="group" aria-label="Sumber daftar utang dan piutang">{['ARIALink','Kredit Barang'].map(t=><Button key={t} aria-pressed={tab===t} className={tab===t?'selected':''} onClick={()=>setTab(t)}>{t}</Button>)}</div>
+   <Card as="section" className="panel debt-panel">
+    <div className="section-title"><div><h2>Daftar {label} <span className="tag">{visible.length}</span></h2><p className="subtle">{credit?'Sisa tagihan untuk penagihan. Hanya modal belum kembali yang masuk ke total piutang.':'Piutang transaksi BRILink dan catatan utang / piutang manual.'}</p></div></div>
+    <div className="debt-list-filters">{credit?<div className="debt-list-controls"><label className="debt-source-filter">Status<NativeSelect aria-label="Status kredit" value={status} onChange={e=>setStatus(e.target.value)}>{['Semua','Berjalan','Menunggak','Lunas'].map(s=><option key={s}>{s}</option>)}</NativeSelect></label></div>:<>
+     <div className="tabs" role="group" aria-label="Filter jenis utang dan piutang">{['Semua','Utang','Piutang'].map(t=><Button key={t} aria-pressed={filter===t} className={filter===t?'selected':''} onClick={()=>setFilter(t)}>{t}</Button>)}</div>
+     <div className="debt-list-controls"><label className="debt-source-filter">Sumber<NativeSelect aria-label="Sumber utang dan piutang" value={source} onChange={e=>setSource(e.target.value)}><option>Semua sumber</option><option value="Transaksi">BRILink</option><option value="Catatan langsung">Manual</option></NativeSelect></label><label className="debt-hide-settled"><input type="checkbox" checked={hideSettled} onChange={e=>setHideSettled(e.target.checked)}/>Sembunyikan yang lunas</label></div>
+    </>}</div>
   {visible.length?<div className="table-wrap" role="region" aria-label={`Tabel ${label}, geser untuk melihat semua kolom`} tabIndex={0}><table><caption className="sr-only">Daftar {label} beserta sisa dalam rupiah</caption><thead><tr>{(credit?['Pelanggan / barang','Sisa tagihan pelanggan','Modal belum kembali','Cicilan tersisa','Jatuh tempo berikutnya','Status']:['Nama / jenis','Nominal awal','Kembali / dibayar','Sisa piutang / utang','Status']).map(title=><th scope="col" key={title}>{title}</th>)}<th scope="col"><span className="sr-only">Tindakan</span></th></tr></thead><tbody>{visible.map(r=>{
    const p=r.payload,s=debtRecordSummary(r);return <tr key={r.id}><td><b>{p.name}</b>{credit?<small>{r.goodsCredit.payload.item}</small>:<small>{p.type} · {r.transaction?'BRILink':'Manual'} · {p.date}{r.pending?' · Di perangkat':''}</small>}{!credit&&p.dueDate&&<small>Jatuh tempo {p.dueDate}</small>}</td>
     {credit?<><td>{rupiah(r.summary.remaining)}</td><td>{rupiah(s.remaining)}<small>{r.summary.capitalStatus}</small></td><td>{r.summary.installmentsLeft} / {r.goodsCredit.payload.tenor}</td><td>{r.summary.next?.date||'—'}</td></>:<><td>{rupiah(p.amount)}</td><td>{rupiah(s.paid)}</td><td>{rupiah(s.remaining)}</td></>}
     <td><span className="tag">{credit?r.summary.status:s.settled?'Lunas':'Belum lunas'}</span></td><td><div className="debt-row-actions"><Button className="text-button" aria-label={`Detail ${credit?'Kredit Barang':p.type} ${p.name}`} onClick={()=>onOpen(r)}>Detail</Button>{!s.settled&&<Button className="secondary" aria-label={`${credit?'Catat cicilan':p.type==='Utang'?'Bayar':'Lunasi'} ${p.type} ${p.name}`} onClick={()=>onSettle(r)}>{credit?'Catat cicilan':p.type==='Utang'?'Bayar':'Lunasi'}</Button>}</div></td></tr>;
   })}</tbody></table></div>:<div className="empty"><h3>{credit?'Tidak ada kredit barang sesuai filter':`Tidak ada ${label} sesuai filter`}</h3><p>{credit?'Ubah filter status atau catat kontrak melalui menu Kredit Barang.':hideSettled?'Ubah filter atau matikan “Sembunyikan yang lunas” untuk melihat catatan lainnya.':'Ubah filter atau catat uang yang perlu Anda terima atau bayarkan.'}</p>{!credit&&<Button onClick={()=>onOpen()}>Catat utang / piutang</Button>}</div>}
- </Card>;
+   </Card>
+  </div>
+ </>;
 }
 function DebtForm({record,onSave,onClose}){
  const p=record?.payload;

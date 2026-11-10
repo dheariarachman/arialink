@@ -662,32 +662,60 @@ tr:last-child td {
   overflow-wrap: anywhere;
 }
 
-.debt-overview {
-  margin-bottom: var(--section-gap);
-}
-
-.debt-overview > p { margin: 0 0 var(--space-2); }
-
 .debt-source-totals {
-  display: flex;
-  flex-wrap: wrap;
-  gap: var(--row-gap);
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--card-gap);
   margin: 0;
-  font-size: var(--text-sm);
 }
 
 .debt-source-totals div { min-width: 0; }
-.debt-source-totals dt { color: var(--muted); }
+.debt-source-totals dt { color: var(--muted); font-size: var(--text-sm); }
 .debt-source-totals dd {
   margin: var(--space-1) 0 0;
+  font-size: var(--text-lg);
   font-weight: var(--font-semibold);
   font-variant-numeric: tabular-nums;
   overflow-wrap: anywhere;
 }
+.debt-source-totals small {
+  display: block;
+  margin-top: var(--space-1);
+  color: var(--muted);
+  font-size: var(--text-xs);
+}
 
-.debt-source-tabs { margin-bottom: var(--section-gap); }
+.debt-list-section {
+  display: grid;
+  gap: var(--section-gap);
+}
 
-.debt-panel .debt-list-filters select { width: auto; max-width: 100%; }
+.debt-list-filters {
+  display: grid;
+  gap: var(--section-gap);
+  padding-bottom: var(--section-gap);
+  margin-bottom: var(--section-gap);
+  border-bottom: 1px solid var(--line);
+}
+
+.debt-list-controls {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--row-gap);
+}
+
+.debt-source-filter {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2);
+  margin: 0;
+  min-width: 0;
+  font-size: var(--text-sm);
+}
+.debt-source-filter select { margin: 0; width: auto; max-width: 100%; }
+
 .debt-panel .debt-hide-settled {
   margin: 0;
   min-height: var(--touch-target-size);
@@ -703,11 +731,15 @@ tr:last-child td {
   flex-shrink: 0;
 }
 
-.debt-list-filters {
-  display: flex;
-  align-items: center;
-  gap: var(--action-gap);
-  flex-wrap: wrap;
+@media (min-width: 768px) and (max-width: 1199px) {
+  .debt-source-totals { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+
+@media (max-width: 767px) {
+  .debt-source-totals { grid-template-columns: minmax(0, 1fr); }
+  .debt-list-controls { flex-direction: column; align-items: stretch; }
+  .debt-source-filter { flex-direction: column; align-items: stretch; }
+  .debt-source-filter select { width: 100%; }
 }
 
 .debt-hide-settled {
