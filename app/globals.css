@@ -662,6 +662,47 @@ tr:last-child td {
   overflow-wrap: anywhere;
 }
 
+.debt-overview {
+  margin-bottom: var(--section-gap);
+}
+
+.debt-overview > p { margin: 0 0 var(--space-2); }
+
+.debt-source-totals {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--row-gap);
+  margin: 0;
+  font-size: var(--text-sm);
+}
+
+.debt-source-totals div { min-width: 0; }
+.debt-source-totals dt { color: var(--muted); }
+.debt-source-totals dd {
+  margin: var(--space-1) 0 0;
+  font-weight: var(--font-semibold);
+  font-variant-numeric: tabular-nums;
+  overflow-wrap: anywhere;
+}
+
+.debt-source-tabs { margin-bottom: var(--section-gap); }
+
+.debt-panel .debt-list-filters select { width: auto; max-width: 100%; }
+.debt-panel .debt-hide-settled {
+  margin: 0;
+  min-height: var(--touch-target-size);
+  white-space: normal;
+  cursor: pointer;
+}
+.debt-panel .debt-hide-settled input {
+  margin: 0;
+  width: var(--space-4);
+  height: var(--space-4);
+  min-height: 0;
+  padding: 0;
+  flex-shrink: 0;
+}
+
 .debt-list-filters {
   display: flex;
   align-items: center;
