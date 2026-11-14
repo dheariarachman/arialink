@@ -9,7 +9,8 @@ test('debt types, WIB default, full settlement, and preserved historical install
  const first=normalize('debt',{type:'Utang',name:'Supplier',amount:500000},new Date('2026-10-28T18:00:00Z'));
  assert.equal(first.date,'2026-10-29');assert.equal(first.dueDate,null);
  assert.equal(debt().name,'Sari');assert.deepEqual(debtSummary(first),{paid:0,remaining:500000,settled:false});
- assert.throws(()=>addDebtPayment(first,payment(100000)),/dilunasi penuh/);
+ assert.deepEqual(debtSummary(addDebtPayment(first,payment(100000))),{paid:100000,remaining:400000,settled:false});
+ assert.throws(()=>addDebtPayment(debt(),payment(100000)),/dilunasi penuh/);
  const partial=normalize('debt',{...first,payments:[payment(100000,{note:'  Tunai  '})]});
  assert.deepEqual(debtSummary(partial),{paid:100000,remaining:400000,settled:false});
  assert.equal(partial.payments[0].note,'Tunai');assert.equal(first.payments.length,0);
@@ -56,4 +57,18 @@ test('offline debt create, edits, full settlement and deletion project into tota
  assert.equal(fundsSummary(project(state)).piutang,0);
  queue(full,3,true);assert.deepEqual(fundsSummary(project(state)),{available:1000000,piutang:0,utang:0,adjusted:1000000});
  assert.equal(state.records[0].payload.amount,1000000);
+});
+
+test('payable installments preserve history, principal, type and manual balances',()=>{
+ const original=debt({type:'Utang'}),first=addDebtPayment(original,payment(100000));
+ const second=addDebtPayment(first,payment(150000));
+ assert.deepEqual(debtSummary(second),{paid:250000,remaining:250000,settled:false});
+ assert.deepEqual(second.payments.slice(0,1),first.payments);
+ const full=addDebtPayment(second,payment(250000));
+ assert.equal(debtSummary(full).settled,true);
+ for(const amount of [0,-1,0.5,250001])assert.throws(()=>addDebtPayment(second,payment(amount)));
+ assert.throws(()=>addDebtPayment(full,payment(1)));
+ const rows=[{kind:'balance',payload:{amount:1000000}},{kind:'debt',payload:second}];
+ assert.deepEqual(fundsSummary(rows),{available:1000000,piutang:0,utang:250000,adjusted:750000});
+ assert.equal(summarize(rows,'2026-10-29','2026-10-29').profit,0);
 });

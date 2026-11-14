@@ -56,6 +56,23 @@ try{
   assert(fundsSummary(rows).piutang===500000&&fundsSummary(rows).available===0,'Kas tercampur piutang');
   await synchronize(user.id);
  });
+ await run('Cicilan utang offline mempertahankan urutan dan menolak hilangnya riwayat saat konflik',async()=>{
+  const id=crypto.randomUUID(),payload=normalize('debt',{type:'Utang',name:'Supplier cicilan',amount:500000});
+  await enqueue(user.id,'debt',id,payload,false,0);
+  const first=addDebtPayment(payload,{id:crypto.randomUUID(),amount:100000,date:payload.date});
+  await enqueue(user.id,'debt',id,first,false,1);
+  const second=addDebtPayment(first,{id:crypto.randomUUID(),amount:150000,date:payload.date});
+  await enqueue(user.id,'debt',id,second,false,2);
+  const state=await loadLocal(user.id),local=project(state).find(r=>r.id===id);
+  assert(debtSummary(local.payload).remaining===250000,'Sisa cicilan offline salah');
+  const serverPayment={id:crypto.randomUUID(),amount:200000,date:payload.date};
+  const current={...local,version:2,pending:false,payload:addDebtPayment(payload,serverPayment)};
+  const mutation=state.queue.find(q=>q.recordId===id);
+  try{await resolveConflict(user.id,{mutation,current},true);throw new Error('Riwayat server tertimpa');}catch(e){assert(e.message.includes('Riwayat pembayaran'),'Konflik pembayaran tidak dicegah');}
+  assert((await loadLocal(user.id)).queue.filter(q=>q.recordId===id).length===3,'Antrean berubah setelah konflik ditolak');
+  await synchronize(user.id);
+  assert((await loadLocal(user.id)).records.find(r=>r.id===id).payload.payments.length===2,'Cicilan tidak tersinkron');
+ });
  await run('Respons pelunasan hilang dikirim ulang tanpa pembayaran ganda',async()=>{
   const current=(await loadLocal(user.id)).records.find(r=>r.id===debtId);
   await enqueue(user.id,'debt',debtId,addDebtPayment(current.payload,{id:crypto.randomUUID(),amount:500000,date:current.payload.date}),false,current.version);
