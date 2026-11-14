@@ -128,3 +128,26 @@ test('legacy installment history remains intact and only full remaining settleme
  const res=await post(full);assert.equal(res.status,200);const settled=(await res.json()).record;
  assert.deepEqual(settled.payload.payments[0],historical.payments[0]);assert.equal(debtSummary(settled.payload).settled,true);DB.close();
 });
+
+test('payable installments retry once, reject stale writes and preserve payment history',async()=>{
+ const {DB,env,cookie,user}=await setup();
+ try{
+  const post=m=>handle(request('mutations','POST',m,cookie),env);
+  const m={id:crypto.randomUUID(),userId:user.id,recordId:crypto.randomUUID(),kind:'debt',baseVersion:0,deleted:false,payload:{type:'Utang',name:'Supplier',amount:500000,date:'2026-10-29'}};
+  let res=await post(m);assert.equal(res.status,200);
+  const initial=(await res.json()).record;
+  const payload=addDebtPayment(initial.payload,{id:crypto.randomUUID(),amount:100000,date:'2026-10-30'});
+  const edit={...m,id:crypto.randomUUID(),baseVersion:1,payload};
+  res=await post(edit);assert.equal(res.status,200);
+  res=await post(edit);assert.equal((await res.json()).record.payload.payments.length,1);
+  const next=addDebtPayment(payload,{id:crypto.randomUUID(),amount:150000,date:'2026-10-31'});
+  res=await post({...edit,id:crypto.randomUUID(),baseVersion:2,payload:next});assert.equal(res.status,200);
+  res=await post({...edit,id:crypto.randomUUID()});assert.equal(res.status,409);
+  assert.equal((await res.json()).current.payload.payments.length,2);
+  for(const invalid of [{...next,payments:payload.payments},{...next,amount:600000},{...next,type:'Piutang'}, {...next,payments:[...next.payments,{id:crypto.randomUUID(),date:'2026-10-31',amount:250001}]}]){
+   assert.equal((await post({...edit,id:crypto.randomUUID(),baseVersion:3,payload:invalid})).status,400);
+  }
+  res=await post({...edit,id:crypto.randomUUID(),baseVersion:3,payload:addDebtPayment(next,{id:crypto.randomUUID(),amount:250000,date:'2026-11-01'})});
+  assert.equal(res.status,200);assert.equal(debtSummary((await res.json()).record.payload).remaining,0);
+ }finally{DB.close();}
+});
